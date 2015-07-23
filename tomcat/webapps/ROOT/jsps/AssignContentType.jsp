@@ -46,6 +46,12 @@
                   <input class="span4" type="text" id="dataDefinitionBlockExtensions" name="dataDefinitionBlockExtensions" value="<s:property value="dataDefinitionBlockExtensions"/>" />
                 </div>
               </div>
+              <div class="control-group">
+                <label class="control-label" for="dataDefinitionBlockXPath">Consider only files whose XML content matches this XPath</label>
+                <div class="controls">
+                  <input class="span4" type="text" id="dataDefinitionBlockXPath" name="dataDefinitionBlockXPath" value="<s:property value="dataDefinitionBlockXPath"/>" />
+                </div>
+              </div>
               <button class="btn pull-left" onclick="window.location='/AssignRootLevelFolders';return false;">Previous</button>
 					  	<button type="submit" name="submitButton" class="btn btn-primary pull-right">Save and Next</button>
 					</form>

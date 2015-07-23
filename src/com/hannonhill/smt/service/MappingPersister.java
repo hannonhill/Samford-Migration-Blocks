@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Map;
 
+import org.apache.commons.lang.xwork.StringEscapeUtils;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
@@ -46,6 +47,7 @@ public class MappingPersister
     private static final String CROSS_SITE_TAG = "crossSite";
     private static final String EXTERNAL_LINK_TAG = "externalLink";
     private static final String DATA_DEFINITION_BLOCK_EXTENSIONS_TAG = "dataDefinitionBlockExtensions";
+    private static final String DATA_DEFINITION_BLOCK_XPATH_TAG = "dataDefinitionBlockXPath";
 
     /**
      * Saves the mappings from the projectInformation into the server's file system
@@ -80,6 +82,10 @@ public class MappingPersister
         content.append("<" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
         content.append(projectInformation.getDataDefinitionBlockExtensionsString());
         content.append("</" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
+
+        content.append("<" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
+        content.append(StringEscapeUtils.escapeXml(projectInformation.getDataDefinitionBlockXPath()));
+        content.append("</" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
 
         content.append("</" + PROJECT_INFORMATION_TAG + ">");
 
@@ -132,6 +138,8 @@ public class MappingPersister
                     loadStaticValueMappings(node, projectInformation.getStaticValueMapping(), contentType);
                 else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_EXTENSIONS_TAG))
                     projectInformation.setDataDefinitionBlockExtensions(node.getTextContent());
+                else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_XPATH_TAG))
+                    projectInformation.setDataDefinitionBlockXPath(node.getTextContent());
             }
         }
         catch (Exception e)

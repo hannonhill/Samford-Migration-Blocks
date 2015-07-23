@@ -42,6 +42,10 @@
 							<div class="span3">Site Name</div>
 							<div class="span7"><strong><s:property value="projectInformation.siteName"/></strong></div>
 						</div>
+            <div class="row">
+              <div class="span3">Match XPath</div>
+              <div class="span7"><strong><s:property value="projectInformation.dataDefinitionBlockXPath"/></strong></div>
+            </div>
 						<br />
 						<s:if test="projectInformation.externalRootLevelFolderAssignemnts.size()>0">
 							<h3>Folder Assignments</h3>

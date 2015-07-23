@@ -62,6 +62,8 @@ public class ProjectInformation
     private final Set<String> dataDefinitionBlockExtensions; // Extensions of files that need to be converted
                                                              // to data definition blocks
 
+    private String dataDefinitionBlockXPath = "";
+
     // other useful information
     private MigrationStatus migrationStatus;
     private LinkCheckingStatus linkCheckingStatus;
@@ -436,5 +438,21 @@ public class ProjectInformation
             result.add(extension.trim());
 
         return result;
+    }
+
+    /**
+     * @return Returns the dataDefinitionBlockXPath.
+     */
+    public String getDataDefinitionBlockXPath()
+    {
+        return dataDefinitionBlockXPath;
+    }
+
+    /**
+     * @param dataDefinitionBlockXPath the dataDefinitionBlockXPath to set
+     */
+    public void setDataDefinitionBlockXPath(String dataDefinitionBlockXPath)
+    {
+        this.dataDefinitionBlockXPath = dataDefinitionBlockXPath;
     }
 }

@@ -192,7 +192,8 @@ public class WebServices
      * 
      * @param blockFile
      * @param projectInformation
-     * @return Returns the {@link CascadeAssetInformation} about the created block
+     * @return Returns the {@link CascadeAssetInformation} about the created block. Null means it was skipped
+     *         due to XPath.
      * @throws Exception
      */
     public static CascadeAssetInformation createDataDefinitionBlock(java.io.File blockFile, ProjectInformation projectInformation) throws Exception
@@ -203,6 +204,9 @@ public class WebServices
 
         // Set up the block object and assign it to the asset object
         XhtmlDataDefinitionBlock block = WebServicesUtil.setupDataDefinitionBlockObject(blockFile, projectInformation);
+        if (block == null)
+            return null;
+
         String path = block.getParentFolderPath() + "/" + block.getName();
         String parentFolderPath = block.getParentFolderPath();
 

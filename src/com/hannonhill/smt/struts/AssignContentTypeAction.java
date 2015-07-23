@@ -29,6 +29,7 @@ public class AssignContentTypeAction extends BaseAction
                                         // submission
 
     private String dataDefinitionBlockExtensions;
+    private String dataDefinitionBlockXPath;
 
     @Override
     public String execute() throws Exception
@@ -65,6 +66,7 @@ public class AssignContentTypeAction extends BaseAction
 
         projectInformation.getDataDefinitionBlockExtensions().clear();
         projectInformation.setDataDefinitionBlockExtensions(dataDefinitionBlockExtensions);
+        projectInformation.setDataDefinitionBlockXPath(dataDefinitionBlockXPath);
 
         try
         {
@@ -94,6 +96,7 @@ public class AssignContentTypeAction extends BaseAction
         Collections.sort(contentTypes);
 
         dataDefinitionBlockExtensions = projectInformation.getDataDefinitionBlockExtensionsString();
+        dataDefinitionBlockXPath = projectInformation.getDataDefinitionBlockXPath();
         return INPUT;
     }
 
@@ -143,5 +146,21 @@ public class AssignContentTypeAction extends BaseAction
     public void setDataDefinitionBlockExtensions(String dataDefinitionBlockExtensions)
     {
         this.dataDefinitionBlockExtensions = dataDefinitionBlockExtensions;
+    }
+
+    /**
+     * @return Returns the dataDefinitionBlockXPath.
+     */
+    public String getDataDefinitionBlockXPath()
+    {
+        return dataDefinitionBlockXPath;
+    }
+
+    /**
+     * @param dataDefinitionBlockXPath the dataDefinitionBlockXPath to set
+     */
+    public void setDataDefinitionBlockXPath(String dataDefinitionBlockXPath)
+    {
+        this.dataDefinitionBlockXPath = dataDefinitionBlockXPath;
     }
 }

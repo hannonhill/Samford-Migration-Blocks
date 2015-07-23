@@ -151,13 +151,19 @@ public class Migrator
                 if (!XmlAnalyzer.allCharactersLegal(relativePath))
                     relativePath = XmlAnalyzer.removeIllegalCharacters(relativePath);
 
-                Log.add("Creating an XHTML/Data Defintion block from file " + relativePath + "... ", migrationStatus);
+                Log.add("Creating a block from file " + relativePath + "... ", migrationStatus);
 
                 CascadeAssetInformation cascadeBlock = WebServices.createDataDefinitionBlock(file, projectInformation);
+                migrationStatus.incrementProgress(1);
+
+                if (cascadeBlock == null)
+                {
+                    Log.add("<span class=\"text-warning\">skipped due to XPath.</span><br/>", migrationStatus);
+                    continue;
+                }
 
                 Log.add(PathUtil.generateBlockLink(cascadeBlock, projectInformation.getUrl()), migrationStatus);
 
-                migrationStatus.incrementProgress(1);
                 migrationStatus.addCreatedBlock(cascadeBlock);
 
                 // Add the block to the list because links will need to be realigned.

@@ -48,12 +48,19 @@ public class WebServicesUtil
      * 
      * @param blockFile
      * @param projectInformation
-     * @return
+     * @return Null means that the block was skipped due to XPath
      * @throws Exception
      */
     public static XhtmlDataDefinitionBlock setupDataDefinitionBlockObject(File blockFile, ProjectInformation projectInformation) throws Exception
     {
         String fileContents = JTidy.tidyContentConditionallyFullHtml(FileSystem.getFileContents(blockFile));
+        String blockXPath = projectInformation.getDataDefinitionBlockXPath();
+        if (blockXPath != null && !blockXPath.equals(""))
+        {
+            String xpathResult = XmlUtil.evaluateXPathExpression(fileContents, projectInformation.getDataDefinitionBlockXPath());
+            if (xpathResult == null || xpathResult.equals(""))
+                return null;
+        }
 
         String parentFolderPath = XmlUtil.evaluateXPathExpression(fileContents, "/Content/@Path");
         if (parentFolderPath == null)
