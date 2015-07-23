@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+    <constant name="struts.enable.DynamicMethodInvocation" value="false" />
+    <constant name="struts.devMode" value="false" />
+    <constant name="struts.multipart.maxSize" value="1073741824" />
+
+    <package name="default" namespace="/" extends="struts-default">
+        <default-action-ref name="ProjectProperties" />
+        
+        <action name="ProjectProperties" class="com.hannonhill.smt.struts.ProjectPropertiesAction">
+        	<result name="input">/jsps/ProjectProperties.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">UploadZip</param>
+        	</result>
+        </action>
+        
+        <action name="ProjectPropertiesGetAvailableSiteNamesAjax" class="com.hannonhill.smt.struts.ProjectPropertiesAction" method="getAvailableSiteNamesByAjax">
+        	<result type="stream">
+		    	<param name="contentType">application/json</param>
+		    	<param name="inputName">inputStream</param>
+		  	</result>
+        </action>
+        
+        <action name="UploadZip" class="com.hannonhill.smt.struts.UploadZipAction">
+        	<result name="input">/jsps/UploadZip.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">AnalyzeInformation</param>
+        	</result>
+        </action>
+        
+        <action name="AnalyzeInformation" class="com.hannonhill.smt.struts.AnalyzeInformationAction">
+        	<result name="input">/jsps/AnalyzeInformation.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">AssignRootLevelFolders</param>
+        	</result>
+        </action>
+        
+		<action name="AssignRootLevelFolders" class="com.hannonhill.smt.struts.AssignRootLevelFoldersAction">
+			<result name="input">/jsps/AssignRootLevelFolders.jsp</result>
+			<result name="success" type="redirectAction">
+				<param name="actionName">AssignContentType</param>
+			</result>
+		</action> 
+        
+        <action name="AssignContentType" class="com.hannonhill.smt.struts.AssignContentTypeAction">
+        	<result name="input">/jsps/AssignContentType.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">AssignFields</param>
+        	</result>
+        </action>
+        
+        <action name="AssignFields" class="com.hannonhill.smt.struts.AssignFieldsAction">
+        	<result name="input">/jsps/AssignFields.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">MigrationSummary</param>
+        	</result>
+        </action>
+
+        <action name="MigrationSummary" class="com.hannonhill.smt.struts.MigrationSummaryAction">
+        	<result name="input">/jsps/MigrationSummary.jsp</result>
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">Migration</param>
+        	</result>
+        </action>
+
+        <action name="Migration" class="com.hannonhill.smt.struts.MigrationAction">
+        	<result>/jsps/Migration.jsp</result>
+        </action>
+        
+        <action name="MigrationAjax" class="com.hannonhill.smt.struts.MigrationAction" method="getTaskStatusByAjax">
+       		<result type="stream">
+		    	<param name="contentType">text/html</param>
+		    	<param name="inputName">inputStream</param>
+		  	</result>
+        </action>
+
+        <action name="MigrationStopTaskAjax" class="com.hannonhill.smt.struts.MigrationAction" method="stopTaskByAjax">
+       		<result type="stream">
+		    	<param name="contentType">text/html</param>
+		    	<param name="inputName">inputStream</param>
+		  	</result>
+        </action>
+
+        <action name="MigrationStartLinkCheckerAjax" class="com.hannonhill.smt.struts.MigrationAction" method="startLinkCheckerByAjax">
+       		<result type="stream">
+		    	<param name="contentType">text/html</param>
+		    	<param name="inputName">inputStream</param>
+		  	</result>
+        </action>
+
+        <action name="MigrationRestartMigrationAjax" class="com.hannonhill.smt.struts.MigrationAction" method="restartMigrationByAjax">
+       		<result type="stream">
+		    	<param name="contentType">text/html</param>
+		    	<param name="inputName">inputStream</param>
+		  	</result>
+        </action>
+        
+        <action name="StartFromBeginning" class="com.hannonhill.smt.struts.StartFromBeginningAction">
+        	<result name="success" type="redirectAction">
+        		<param name="actionName">ProjectProperties</param>
+        	</result>
+        </action>
+    </package>
+</struts>

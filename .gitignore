@@ -1,0 +1,6 @@
+.DS_Store
+/bin
+tomcat/webapps/ROOT/WEB-INF/classes/com
+tomcat/work/Catalina
+dist
+uploads
