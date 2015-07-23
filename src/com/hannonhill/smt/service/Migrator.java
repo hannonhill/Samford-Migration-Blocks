@@ -6,7 +6,6 @@
 package com.hannonhill.smt.service;
 
 import java.io.File;
-import java.util.List;
 import java.util.Set;
 
 import com.hannonhill.smt.CascadeAssetInformation;
@@ -22,71 +21,6 @@ import com.hannonhill.smt.util.PathUtil;
  */
 public class Migrator
 {
-
-    /**
-     * Re-edits each page to align the links to make them tracked by Cascade Server
-     */
-    public static void alignLinks(ProjectInformation projectInformation)
-    {
-        MigrationStatus migrationStatus = projectInformation.getMigrationStatus();
-        List<CascadeAssetInformation> blocks = migrationStatus.getCreatedBlocks();
-        List<CascadeAssetInformation> pages = migrationStatus.getCreatedPages();
-
-        for (CascadeAssetInformation block : blocks)
-        {
-            if (migrationStatus.isShouldStop())
-                return;
-
-            try
-            {
-                Log.add("Aligning links in block " + PathUtil.generateBlockLink(block, projectInformation.getUrl()) + "... ", migrationStatus);
-                WebServices.realignXhtmlBlockLinks(block.getId(), projectInformation);
-                migrationStatus.incrementProgress(1);
-                migrationStatus.incrementAssetsAligned();
-                Log.add("<span class=\"text-success\">success.</span><br/>", migrationStatus);
-            }
-            catch (Exception e)
-            {
-                // Sometimes the exception message is null, so we get the message from the parent exception
-                String message = e.getMessage();
-                if (message == null && e.getCause() != null)
-                    message = e.getCause().getMessage();
-
-                migrationStatus.incrementProgress(1);
-                migrationStatus.incrementAssetsNotAligned();
-                Log.add("<span class=\"text-error\">Error: " + message + "</span><br/>", migrationStatus);
-                e.printStackTrace();
-            }
-        }
-
-        for (CascadeAssetInformation page : pages)
-        {
-            if (migrationStatus.isShouldStop())
-                return;
-
-            try
-            {
-                Log.add("Aligning links in page " + PathUtil.generatePageLink(page, projectInformation.getUrl()) + "... ", migrationStatus);
-                WebServices.realignLinks(page.getId(), projectInformation);
-                migrationStatus.incrementProgress(1);
-                migrationStatus.incrementAssetsAligned();
-                Log.add("<span class=\"text-success\">success.</span><br/>", migrationStatus);
-            }
-            catch (Exception e)
-            {
-                // Sometimes the exception message is null, so we get the message from the parent exception
-                String message = e.getMessage();
-                if (message == null && e.getCause() != null)
-                    message = e.getCause().getMessage();
-
-                migrationStatus.incrementProgress(1);
-                migrationStatus.incrementAssetsNotAligned();
-                Log.add("<span class=\"text-error\">Error: " + message + "</span><br/>", migrationStatus);
-                e.printStackTrace();
-            }
-        }
-    }
-
     /**
      * Creates files in Cascade that do not end with {@link XmlAnalyzer#FILE_TO_PAGE_EXTENSIONS} or
      * {@link XmlAnalyzer#FILE_TO_BLOCK_EXTENSIONS} extension and are not hidden (do not start with "."). Uses
@@ -110,31 +44,11 @@ public class Migrator
                 continue;
 
             String extension = PathUtil.getExtension(name);
-            if (projectInformation.getPageExtensions().contains(extension) || projectInformation.getBlockExtensions().contains(extension))
+            if (projectInformation.getDataDefinitionBlockExtensions().contains(extension))
                 continue;
 
             createFile(folderFile, projectInformation, metadataSetId);
             projectInformation.getMigrationStatus().incrementProgress(2);
-        }
-    }
-
-    /**
-     * Goes through a set of files to process and creates Cascade Blocks out of them if the file ends with any
-     * of the {@link XmlAnalyzer#FILE_TO_BLOCK_EXTENSIONS} extensions.
-     * 
-     * @param projectInformation
-     * @param metadataSetId
-     */
-    public static void createXhtmlBlocks(ProjectInformation projectInformation, String metadataSetId)
-    {
-        for (File file : projectInformation.getFilesToProcess())
-        {
-            if (projectInformation.getMigrationStatus().isShouldStop())
-                return;
-
-            String extension = PathUtil.getExtension(file.getName());
-            if (projectInformation.getBlockExtensions().contains(extension))
-                createXhtmlBlock(file, projectInformation, metadataSetId);
         }
     }
 
@@ -163,51 +77,6 @@ public class Migrator
             Log.add("<span class=\"text-error\">Error when creating a file: " + message + "</span><br/>", migrationStatus);
             e.printStackTrace();
             migrationStatus.incrementAssetsWithErrors();
-        }
-    }
-
-    /**
-     * Creates XHTML Block in Cascade with the content of the file put through JTidy.
-     * 
-     * @param file
-     * @param projectInformation
-     * @param metadataSetId
-     */
-    private static void createXhtmlBlock(File file, ProjectInformation projectInformation, String metadataSetId)
-    {
-        // web services create xhtml block
-        MigrationStatus migrationStatus = projectInformation.getMigrationStatus();
-        try
-        {
-            CascadeAssetInformation cascadeBlock = WebServices.createXhtmlBlock(file, projectInformation, metadataSetId);
-            Log.add(PathUtil.generateBlockLink(cascadeBlock, projectInformation.getUrl()), migrationStatus);
-            migrationStatus.incrementProgress(1);
-            migrationStatus.addCreatedBlock(cascadeBlock);
-            if (cascadeBlock.isAlreadyExisted())
-            {
-                Log.add("<span class=\"text-warning\">already existed.</span><br/>", migrationStatus);
-                migrationStatus.incrementAssetsSkipped();
-            }
-            else
-            {
-                migrationStatus.incrementAssetsCreated();
-                Log.add("<span class=\"text-success\">success.</span><br/>", migrationStatus);
-            }
-        }
-        catch (Exception e)
-        {
-            // Sometimes the exception message is null, so we get the message from the parent exception
-            String message = e.getMessage();
-            if (message == null && e.getCause() != null)
-                message = e.getCause().getMessage();
-
-            Log.add("<span class=\"text-error\">Error: " + message + "</span><br/>", migrationStatus);
-
-            // Increment progress by 2, because no link alignment will be needed for it
-            migrationStatus.incrementProgress(2);
-            migrationStatus.incrementAssetsWithErrors();
-
-            e.printStackTrace();
         }
     }
 
@@ -262,9 +131,6 @@ public class Migrator
             e.printStackTrace();
         }
 
-        // Create XHTML Blocks
-        createXhtmlBlocks(projectInformation, metadataSetId);
-
         for (File file : filesToProcess)
         {
             if (migrationStatus.isShouldStop())
@@ -273,7 +139,7 @@ public class Migrator
             String name = file.getName();
             String extension = PathUtil.getExtension(name);
 
-            if (!projectInformation.getPageExtensions().contains(extension))
+            if (!projectInformation.getDataDefinitionBlockExtensions().contains(extension))
                 continue;
 
             try
@@ -285,9 +151,9 @@ public class Migrator
                 if (!XmlAnalyzer.allCharactersLegal(relativePath))
                     relativePath = XmlAnalyzer.removeIllegalCharacters(relativePath);
 
-                Log.add("Creating a page from file " + relativePath + "... ", migrationStatus);
+                Log.add("Creating an XHTML/Data Defintion block from file " + relativePath + "... ", migrationStatus);
 
-                CascadeAssetInformation cascadePage = WebServices.createPage(file, projectInformation);
+                CascadeAssetInformation cascadePage = WebServices.createDataDefinitionBlock(file, projectInformation);
 
                 Log.add(PathUtil.generatePageLink(cascadePage, projectInformation.getUrl()), migrationStatus);
 

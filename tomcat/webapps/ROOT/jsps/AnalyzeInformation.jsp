@@ -2,7 +2,7 @@
 
 <html>
 	<head>
-		<title>Universal Migration Tool</title>
+		<title>Samford Migration Blocks</title>
 		<link href="/css/styles.css?t=<s:property value="time"/>" type="text/css" rel="stylesheet" />
 		<link href="/css/jquery-ui-1.10.3.custom.min.css" media="screen" rel="stylesheet" type="text/css"></link>
 		<link href="/css/jquery.shadow.css" media="screen" rel="stylesheet" type="text/css"></link>		

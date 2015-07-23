@@ -28,11 +28,11 @@ import com.hannonhill.smt.service.XmlAnalyzer;
 import com.hannonhill.www.ws.ns.AssetOperationService.DynamicMetadataField;
 import com.hannonhill.www.ws.ns.AssetOperationService.FieldValue;
 import com.hannonhill.www.ws.ns.AssetOperationService.Metadata;
-import com.hannonhill.www.ws.ns.AssetOperationService.Page;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredData;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataAssetType;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataType;
+import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
 
 /**
  * Utility class with helper methods related to web services
@@ -51,7 +51,7 @@ public class WebServicesUtil
      * @return
      * @throws Exception
      */
-    public static Page setupPageObject(File pageFile, ProjectInformation projectInformation) throws Exception
+    public static XhtmlDataDefinitionBlock setupDataDefinitionBlockObject(File pageFile, ProjectInformation projectInformation) throws Exception
     {
         String path = PathUtil.truncateExtension(PathUtil.getRelativePath(pageFile, projectInformation.getXmlDirectory()));
         if (!XmlAnalyzer.allCharactersLegal(path))
@@ -66,19 +66,20 @@ public class WebServicesUtil
         ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
         Set<String> metadataFieldNames = contentType.getMetadataFields().keySet();
 
-        Page page = new Page();
-        page.setContentTypePath(contentTypePath);
-        page.setName(pageName);
-        page.setParentFolderPath(parentFolderPath);
-        page.setSiteName(projectInformation.getSiteName());
-        page.setMetadata(createPageMetadata(projectInformation, pageFileContents, metadataFieldNames, projectInformation.getMigrationStatus()));
+        XhtmlDataDefinitionBlock block = new XhtmlDataDefinitionBlock();
+        block.setMetadataSetId(contentType.getMetadataSetId());
+        block.setName(pageName);
+        block.setParentFolderPath(parentFolderPath);
+        block.setSiteName(projectInformation.getSiteName());
+        block.setMetadata(createPageMetadata(projectInformation, pageFileContents, metadataFieldNames, projectInformation.getMigrationStatus()));
 
         // Create the structured data object with the tree of structured data nodes
-        StructuredData structuredData = createPageStructuredData(projectInformation, pageFileContents, parentFolderPath + "/" + pageName);
+        StructuredData structuredData = createPageStructuredData(projectInformation, pageFileContents, parentFolderPath + "/" + pageName,
+                contentType.getDataDefinitionId());
 
         // If page uses data definition, assign it to the page object
         if (contentType.isUsesDataDefinition())
-            page.setStructuredData(structuredData);
+            block.setStructuredData(structuredData);
         else
         {
             // if page does not use data definition, the tree mapping should contain only a single xhtml field
@@ -90,10 +91,10 @@ public class WebServicesUtil
                 ; // do nothing, no mappings
             else
                 throw new Exception("The mappings for a page without Data Definition contains more than one field.");
-            page.setXhtml(xhtml == null ? "" : xhtml);
+            block.setXhtml(xhtml == null ? "" : xhtml);
         }
 
-        return page;
+        return block;
     }
 
     /**
@@ -103,11 +104,12 @@ public class WebServicesUtil
      * @param projectInformation
      * @param fileContents
      * @param assetPath
+     * @param dataDefinitionId
      * @return
      * @throws Exception
      */
-    private static StructuredData createPageStructuredData(ProjectInformation projectInformation, String fileContents, String assetPath)
-            throws Exception
+    private static StructuredData createPageStructuredData(ProjectInformation projectInformation, String fileContents, String assetPath,
+            String dataDefinitionId) throws Exception
     {
         // Create the root group object to which all the information will be attached
         StructuredDataGroup rootGroup = new StructuredDataGroup();
@@ -137,7 +139,7 @@ public class WebServicesUtil
                 assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
             }
 
-        return convertToStructuredData(rootGroup);
+        return convertToStructuredData(rootGroup, dataDefinitionId);
     }
 
     /**
@@ -334,13 +336,15 @@ public class WebServicesUtil
      * Converts elements from rootGroup to StructuredData object with all the ancestry (hierarchy)
      * 
      * @param rootGroup
+     * @param dataDefinitionid
      * @return
      */
-    private static StructuredData convertToStructuredData(StructuredDataGroup rootGroup)
+    private static StructuredData convertToStructuredData(StructuredDataGroup rootGroup, String dataDefintionId)
     {
-        StructuredData sturcturedData = new StructuredData();
-        sturcturedData.setStructuredDataNodes(convertToStructuredDataNodes(rootGroup));
-        return sturcturedData;
+        StructuredData structuredData = new StructuredData();
+        structuredData.setStructuredDataNodes(convertToStructuredDataNodes(rootGroup));
+        structuredData.setDefinitionId(dataDefintionId);
+        return structuredData;
     }
 
     /**

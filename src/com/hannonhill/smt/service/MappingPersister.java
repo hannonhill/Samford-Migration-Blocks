@@ -45,8 +45,7 @@ public class MappingPersister
     private static final String FOLDER_TAG = "folder";
     private static final String CROSS_SITE_TAG = "crossSite";
     private static final String EXTERNAL_LINK_TAG = "externalLink";
-    private static final String PAGE_EXTENSIONS_TAG = "pageExtensions";
-    private static final String BLOCK_EXTENSIONS_TAG = "blockExtensions";
+    private static final String DATA_DEFINITION_BLOCK_EXTENSIONS_TAG = "dataDefinitionBlockExtensions";
 
     /**
      * Saves the mappings from the projectInformation into the server's file system
@@ -78,13 +77,9 @@ public class MappingPersister
             persistRootLevelFolder(content, projectInformation.getExternalRootLevelFolderAssignemnts().get(folder));
         content.append("</" + ROOT_LEVEL_FOLDERS_TAG + ">");
 
-        content.append("<" + PAGE_EXTENSIONS_TAG + ">");
-        content.append(projectInformation.getPageExtensionsString());
-        content.append("</" + PAGE_EXTENSIONS_TAG + ">");
-
-        content.append("<" + BLOCK_EXTENSIONS_TAG + ">");
-        content.append(projectInformation.getBlockExtensionsString());
-        content.append("</" + BLOCK_EXTENSIONS_TAG + ">");
+        content.append("<" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
+        content.append(projectInformation.getDataDefinitionBlockExtensionsString());
+        content.append("</" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
 
         content.append("</" + PROJECT_INFORMATION_TAG + ">");
 
@@ -94,8 +89,8 @@ public class MappingPersister
 
     /**
      * Loads the mappings from the file system and assigns them to the projectInformation object. If there is
-     * a problem with loading the saved mappings,
-     * nothing significant will happen - no mappings will be loaded and the stack trace will be in the output.
+     * a problem with loading the saved mappings, nothing significant will happen - no mappings will be loaded
+     * and the stack trace will be in the output.
      * 
      * @param projectInformation
      */
@@ -135,10 +130,8 @@ public class MappingPersister
                     loadFieldMappings(node, projectInformation.getFieldMapping(), contentType);
                 else if (node.getNodeName().equals(STATIC_VALUE_MAPPINGS_TAG))
                     loadStaticValueMappings(node, projectInformation.getStaticValueMapping(), contentType);
-                else if (node.getNodeName().equals(PAGE_EXTENSIONS_TAG))
-                    projectInformation.setPageExtensions(node.getTextContent());
-                else if (node.getNodeName().equals(BLOCK_EXTENSIONS_TAG))
-                    projectInformation.setBlockExtensions(node.getTextContent());
+                else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_EXTENSIONS_TAG))
+                    projectInformation.setDataDefinitionBlockExtensions(node.getTextContent());
             }
         }
         catch (Exception e)
@@ -193,8 +186,7 @@ public class MappingPersister
 
     /**
      * Assigns the static value mappings from each &lt;fieldMapping&gt; child to the mappings. Finds the field
-     * object by its identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * object by its identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingsNode
      * @param mappings
@@ -212,8 +204,7 @@ public class MappingPersister
 
     /**
      * Assigns the field mappings from given node to the mappings. Finds the field object by its identifier in
-     * the content type.
-     * If the field object could not be found, it gets ignored.
+     * the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
      * @param mappings
@@ -251,8 +242,8 @@ public class MappingPersister
 
     /**
      * Assigns the static value mappings from each &lt;staticValueMapping&gt; child to the mappings. Finds the
-     * field object by its identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * field object by its identifier in the content type. If the field object could not be found, it gets
+     * ignored.
      * 
      * @param mappingsNode
      * @param mappings
@@ -270,8 +261,7 @@ public class MappingPersister
 
     /**
      * Assigns the static value mappings from given node to the mappings. Finds the field object by its
-     * identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
      * @param mappings
@@ -309,9 +299,8 @@ public class MappingPersister
 
     /**
      * If cascadeMetadataField is not null, returns a metadata field from the content type that matches the
-     * cascadeMetadataField identifier.
-     * If not, returns a data definition field from the content type that matches the
-     * cascadeDataDefinitionField identifier.
+     * cascadeMetadataField identifier. If not, returns a data definition field from the content type that
+     * matches the cascadeDataDefinitionField identifier.
      * 
      * @param contentType
      * @param cascadeMetadataField
@@ -390,8 +379,7 @@ public class MappingPersister
 
     /**
      * Adds the &lt;cascadeMetadataField&gt; tag or &lt;cascadeDataDefinitionField&gt; tag depending on the
-     * field type to the content
-     * with the identifier of the field
+     * field type to the content with the identifier of the field
      * 
      * @param content
      * @param cascadeField

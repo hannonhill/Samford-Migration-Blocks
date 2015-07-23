@@ -13,9 +13,8 @@ import com.hannonhill.smt.service.Migrator;
 /**
  * The background migration task
  * 
- * @author  Artur Tomusiak
- * @version $Id$
- * @since   1.0
+ * @author Artur Tomusiak
+ * @since 1.0
  */
 public class MigrationTask extends Thread
 {
@@ -44,7 +43,6 @@ public class MigrationTask extends Thread
         projectInformation.setCurrentTask(TASK_NAME);
 
         Migrator.createPages(projectInformation);
-        Migrator.alignLinks(projectInformation);
         if (migrationStatus.isShouldStop())
             Log.add("<br/>Migration stopped by the user.<br/>", migrationStatus);
 
@@ -63,8 +61,6 @@ public class MigrationTask extends Thread
         Log.add("Created: <span style=\"color: green;\">" + migrationStatus.getAssetsCreated() + "</span><br/>", migrationStatus);
         Log.add("Skipped: <span style=\"color: blue;\">" + migrationStatus.getAssetsSkipped() + "</span><br/>", migrationStatus);
         Log.add("Errors: <span style=\"color: red;\">" + migrationStatus.getAssetsWithErrors() + "</span><br/>", migrationStatus);
-        Log.add("Aligned: <span style=\"color: green;\">" + migrationStatus.getAssetsAligned() + "</span><br/>", migrationStatus);
-        Log.add("Aligning errors: <span style=\"color: red;\">" + migrationStatus.getAssetsNotAligned() + "</span><br/>", migrationStatus);
         Log.add("</em><br/>Migration completed.<br/><br/>", migrationStatus);
     }
 }

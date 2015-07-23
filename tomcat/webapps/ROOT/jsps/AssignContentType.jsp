@@ -4,7 +4,7 @@
 <html>
   <head>
 		<meta charset="utf-8">    
-		<title>Universal Migration Tool</title>
+		<title>Samford Migration Blocks</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		
 		<link href="/css/bootstrap.min.css?t=<s:property value="time"/>" type="text/css" rel="stylesheet" />
@@ -15,7 +15,7 @@
 	<body>
 		<div class="mt-header">
       <div class="container">
-        <h1 class="brand">Cascade Server <span>Universal Migration Tool</span></h1>
+        <h1 class="brand">Cascade Server <span>Samford Migration Blocks</span></h1>
       </div>
     </div>
     <div id="page" class="container">
@@ -41,15 +41,9 @@
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="pageExtensions">Page Extensions</label>
+                <label class="control-label" for="dataDefinitionBlockExtensions">Data Definition Block Extensions</label>
                 <div class="controls">
-                  <input class="span4" type="text" id="pageExtensions" name="pageExtensions" value="<s:property value="pageExtensions"/>" />
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label" for="blockExtensions">XHTML Block extensions</label>
-                <div class="controls">
-                  <input class="span4" type="text" id="blockExtensions" name="blockExtensions" value="<s:property value="blockExtensions"/>" />
+                  <input class="span4" type="text" id="dataDefinitionBlockExtensions" name="dataDefinitionBlockExtensions" value="<s:property value="dataDefinitionBlockExtensions"/>" />
                 </div>
               </div>
               <button class="btn pull-left" onclick="window.location='/AssignRootLevelFolders';return false;">Previous</button>

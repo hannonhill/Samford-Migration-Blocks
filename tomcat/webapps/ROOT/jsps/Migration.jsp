@@ -4,7 +4,7 @@
 <html lang="en">
   <head>
 		<meta charset="utf-8">    
-		<title>Universal Migration Tool</title>
+		<title>Samford Migration Blocks</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		
 		<link href="/css/bootstrap.min.css?t=<s:property value="time"/>" type="text/css" rel="stylesheet" />
@@ -16,7 +16,7 @@
 	<body>
 		<div class="mt-header">
       <div class="container">
-        <h1 class="brand">Cascade Server <span>Universal Migration Tool</span></h1>
+        <h1 class="brand">Cascade Server <span>Samford Migration Blocks</span></h1>
       </div>
     </div>
     <div id="page" class="container">
@@ -38,8 +38,6 @@
 							<td>Created: <span id="created">0</span></td>
 							<td>Skipped: <span id="skipped">0</span></td>
 							<td>Errors: <span id="errors">0</span></td>
-							<td>Aligned: <span id="aligned">0</span></td>
-							<td>Aligning errors: <span id="notAligned">0</span></td>
 						</tr>
 					</table>
 					<table class="table" id="link-checker-status" style="display: none;">
@@ -126,8 +124,6 @@
 				document.getElementById("created").innerHTML = "0";
 				document.getElementById("skipped").innerHTML = "0";
 				document.getElementById("errors").innerHTML = "0";
-				document.getElementById("aligned").innerHTML = "0";
-				document.getElementById("notAligned").innerHTML = "0";
 		    document.getElementById("migration-status").style.display="";
 		    document.getElementById("link-checker-status").style.display="none";
 		    $("#js-progress-bar .bar").html("");
@@ -182,8 +178,6 @@
 					animateNumber("created", responseObject["created"]);
 					animateNumber("skipped", responseObject["skipped"]);
 					animateNumber("errors", responseObject["withErrors"]);
-					animateNumber("aligned", responseObject["aligned"]);
-					animateNumber("notAligned", responseObject["notAligned"]);
 				}
 				else if (currentTask=="link-checker")
 				{

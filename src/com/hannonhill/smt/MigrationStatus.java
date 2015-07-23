@@ -22,9 +22,6 @@ public class MigrationStatus extends TaskStatus
     private int assetsSkipped;
     private int assetsWithErrors;
 
-    private int assetsAligned;
-    private int assetsNotAligned;
-
     private final List<CascadeAssetInformation> createdPages; // a list of ids and paths of created pages
     private final List<CascadeAssetInformation> createdBlocks; // a list of ids of created blocks
 
@@ -40,9 +37,6 @@ public class MigrationStatus extends TaskStatus
         assetsCreated = 0;
         assetsSkipped = 0;
         assetsWithErrors = 0;
-
-        assetsAligned = 0;
-        assetsNotAligned = 0;
 
         createdPages = new ArrayList<CascadeAssetInformation>();
         createdBlocks = new ArrayList<CascadeAssetInformation>();
@@ -96,38 +90,6 @@ public class MigrationStatus extends TaskStatus
     public void incrementAssetsWithErrors()
     {
         assetsWithErrors++;
-    }
-
-    /**
-     * @return Returns the assetsAligned.
-     */
-    public int getAssetsAligned()
-    {
-        return assetsAligned;
-    }
-
-    /**
-     * Increments the number of assets aligned by 1
-     */
-    public void incrementAssetsAligned()
-    {
-        assetsAligned++;
-    }
-
-    /**
-     * @return Returns the assetsNotAligned.
-     */
-    public int getAssetsNotAligned()
-    {
-        return assetsNotAligned;
-    }
-
-    /**
-     * Increments the number of assets not aligned by 1
-     */
-    public void incrementAssetsNotAligned()
-    {
-        assetsNotAligned++;
     }
 
     /**

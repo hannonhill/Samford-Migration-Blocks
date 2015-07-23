@@ -2,5 +2,6 @@
 /bin
 tomcat/webapps/ROOT/WEB-INF/classes/com
 tomcat/work/Catalina
+tomcat/backup
 dist
 uploads

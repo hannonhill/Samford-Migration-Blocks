@@ -1,6 +1,6 @@
-<project name="UMT">
+<project name="SamfordMigrationBlocks">
 
-    <description>Universal Migration Tool</description>
+    <description>Samford Migration Blocks</description>
 
     <property name="src.dir" value="src"/>
 	<property name="dist.dir" value="dist"/>

@@ -67,13 +67,11 @@ public class MigrationAction extends BaseAction
                 MigrationStatus migrationStatus = projectInformation.getMigrationStatus();
                 object = createJSONObject(migrationStatus, currentTask);
 
-                int totalProgress = (projectInformation.getFilesToProcess().size()) * 2;
+                int totalProgress = (projectInformation.getFilesToProcess().size());
                 object.put("progress", totalProgress == 0 ? 0 : 1000.0 * migrationStatus.getProgress() / totalProgress);
                 object.put("created", migrationStatus.getAssetsCreated());
                 object.put("skipped", migrationStatus.getAssetsSkipped());
                 object.put("withErrors", migrationStatus.getAssetsWithErrors());
-                object.put("aligned", migrationStatus.getAssetsAligned());
-                object.put("notAligned", migrationStatus.getAssetsNotAligned());
             }
             else if (LinkCheckingTask.TASK_NAME.equals(currentTask))
             {

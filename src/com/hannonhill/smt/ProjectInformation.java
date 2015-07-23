@@ -54,15 +54,13 @@ public class ProjectInformation
 
     // path to id map
     private final Map<String, String> existingCascadeFiles; // Used for Luminis file import and link checking
-    private final Map<String, String> existingCascadeXhtmlBlocks;// performance reasons - file paths are
-                                                                 // checked first
     // to avoid having to check if file exists each time a new
     // file is brought in
-    private final Map<String, String> existingCascadePages; // Also used for link checking performance reasons
+    private final Map<String, String> existingCascadeDataDefinitionBlocks; // Also used for link checking
+                                                                           // performance reasons
 
-    private final Set<String> pageExtensions; // Extensions of files that need to be converted to pages
-    private final Set<String> blockExtensions; // Extensions of files that need to be converted to xhtml
-                                               // blocks
+    private final Set<String> dataDefinitionBlockExtensions; // Extensions of files that need to be converted
+                                                             // to data definition blocks
 
     // other useful information
     private MigrationStatus migrationStatus;
@@ -88,10 +86,8 @@ public class ProjectInformation
         contentTypes = new HashMap<String, ContentTypeInformation>();
         externalRootLevelFolderAssignemnts = new HashMap<String, ExternalRootLevelFolderAssignment>();
         existingCascadeFiles = new HashMap<String, String>();
-        existingCascadeXhtmlBlocks = new HashMap<String, String>();
-        existingCascadePages = new HashMap<String, String>();
-        pageExtensions = new HashSet<String>();
-        blockExtensions = new HashSet<String>();
+        existingCascadeDataDefinitionBlocks = new HashMap<String, String>();
+        dataDefinitionBlockExtensions = new HashSet<String>();
 
         setDefaultExtensions();
     }
@@ -101,16 +97,13 @@ public class ProjectInformation
      */
     public void setDefaultExtensions()
     {
-        pageExtensions.clear();
-        pageExtensions.add(".html");
-        pageExtensions.add(".php");
-        pageExtensions.add(".jsp");
-        pageExtensions.add(".htm");
-        pageExtensions.add(".asp");
-
-        blockExtensions.clear();
-        blockExtensions.add(".inc");
-        blockExtensions.add(".txt");
+        dataDefinitionBlockExtensions.clear();
+        dataDefinitionBlockExtensions.add(".html");
+        dataDefinitionBlockExtensions.add(".php");
+        dataDefinitionBlockExtensions.add(".jsp");
+        dataDefinitionBlockExtensions.add(".htm");
+        dataDefinitionBlockExtensions.add(".asp");
+        dataDefinitionBlockExtensions.add(".xml");
     }
 
     /**
@@ -339,19 +332,11 @@ public class ProjectInformation
     }
 
     /**
-     * @return Returns the existingCascadeXhtmlBlocks.
+     * @return Returns the existingCascadeDataDefinitionBlocks.
      */
-    public Map<String, String> getExistingCascadeXhtmlBlocks()
+    public Map<String, String> getExistingCascadeDataDefinitionBlocks()
     {
-        return existingCascadeXhtmlBlocks;
-    }
-
-    /**
-     * @return Returns the existingCascadePages.
-     */
-    public Map<String, String> getExistingCascadePages()
-    {
-        return existingCascadePages;
+        return existingCascadeDataDefinitionBlocks;
     }
 
     /**
@@ -387,19 +372,19 @@ public class ProjectInformation
     }
 
     /**
-     * @return Returns the pageExtensions.
+     * @return Returns the dataDefinitionBlockExtensions.
      */
-    public Set<String> getPageExtensions()
+    public Set<String> getDataDefinitionBlockExtensions()
     {
-        return pageExtensions;
+        return dataDefinitionBlockExtensions;
     }
 
     /**
      * @return Returns a comma separated list of page extensions
      */
-    public String getPageExtensionsString()
+    public String getDataDefinitionBlockExtensionsString()
     {
-        return convertSetToExtensions(pageExtensions);
+        return convertSetToExtensions(dataDefinitionBlockExtensions);
     }
 
     /**
@@ -407,37 +392,10 @@ public class ProjectInformation
      * 
      * @param extensions
      */
-    public void setPageExtensions(String extensions)
+    public void setDataDefinitionBlockExtensions(String extensions)
     {
-        pageExtensions.clear();
-        pageExtensions.addAll(convertExtensionsToSet(extensions));
-    }
-
-    /**
-     * @return Returns the blockExtensions.
-     */
-    public Set<String> getBlockExtensions()
-    {
-        return blockExtensions;
-    }
-
-    /**
-     * @return Returns a comma separated list of block extensions
-     */
-    public String getBlockExtensionsString()
-    {
-        return convertSetToExtensions(blockExtensions);
-    }
-
-    /**
-     * Sets the block extensions from a comma separated list
-     * 
-     * @param extensions
-     */
-    public void setBlockExtensions(String extensions)
-    {
-        blockExtensions.clear();
-        blockExtensions.addAll(convertExtensionsToSet(extensions));
+        dataDefinitionBlockExtensions.clear();
+        dataDefinitionBlockExtensions.addAll(convertExtensionsToSet(extensions));
     }
 
     /**

@@ -198,7 +198,7 @@ public class LinkRewriter
     }
 
     /**
-     * Removes an extension if the link points to an existing page
+     * Removes an extension if the link points to an existing data definition block
      * 
      * @param element
      * @param attributeName
@@ -221,7 +221,7 @@ public class LinkRewriter
 
         String withoutExtension = PathUtil.truncateExtension(withoutAnchor);
         String pathOnly = PathUtil.removeLeadingSlashes(withoutExtension);
-        if (projectInformation.getExistingCascadePages().keySet().contains(pathOnly.toLowerCase()))
+        if (projectInformation.getExistingCascadeDataDefinitionBlocks().keySet().contains(pathOnly.toLowerCase()))
             attribute.setNodeValue(withoutExtension + anchor);
     }
 
@@ -257,16 +257,14 @@ public class LinkRewriter
     }
 
     /**
-     * Rewrites the prefix part of the link and if needed, trunkates the extension.
-     * For example, for a page with path /folder/page and a link ../folder2/page2.html, the link will be
-     * rewritten to /folder2/page2.html.
-     * If it goes up to the root level (and example above does), it looks for the root level folder
-     * assignments and if it finds one, it rewrites it again
-     * with the assignment. For example if there is a site assignment of "folder2" to "site_a", the link will
-     * look like this: site://site_a/folder2/page2.html
-     * If it is not a external link, also trunkates extension if it is a link to a page, meaning the extension
-     * belongs to one of the gathered extensions
-     * in project information. So the end result of the example above would be site://site_a/folder2/page2
+     * Rewrites the prefix part of the link and if needed, trunkates the extension. For example, for a page
+     * with path /folder/page and a link ../folder2/page2.html, the link will be rewritten to
+     * /folder2/page2.html. If it goes up to the root level (and example above does), it looks for the root
+     * level folder assignments and if it finds one, it rewrites it again with the assignment. For example if
+     * there is a site assignment of "folder2" to "site_a", the link will look like this:
+     * site://site_a/folder2/page2.html If it is not a external link, also trunkates extension if it is a link
+     * to a page, meaning the extension belongs to one of the gathered extensions in project information. So
+     * the end result of the example above would be site://site_a/folder2/page2
      * 
      * @param link
      * @param pagePath
@@ -277,7 +275,7 @@ public class LinkRewriter
     {
         String newPath = PathUtil.convertRelativeToAbsolute(link, pagePath);
         String extension = PathUtil.getExtension(newPath);
-        if (projectInformation.getPageExtensions().contains(extension) || projectInformation.getBlockExtensions().contains(extension))
+        if (projectInformation.getDataDefinitionBlockExtensions().contains(extension))
             newPath = PathUtil.truncateExtension(newPath);
 
         int deployPathLevels = pagePath.split("/").length - 1;
