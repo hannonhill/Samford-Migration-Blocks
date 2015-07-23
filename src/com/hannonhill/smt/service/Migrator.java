@@ -81,11 +81,11 @@ public class Migrator
     }
 
     /**
-     * Creates pages based on the information provided in {@link ProjectInformation}
+     * Creates blocks based on the information provided in {@link ProjectInformation}
      * 
      * @param projectInformation
      */
-    public static void createPages(ProjectInformation projectInformation)
+    public static void createBlocks(ProjectInformation projectInformation)
     {
         Set<File> filesToProcess = projectInformation.getFilesToProcess();
         MigrationStatus migrationStatus = projectInformation.getMigrationStatus();
@@ -153,15 +153,15 @@ public class Migrator
 
                 Log.add("Creating an XHTML/Data Defintion block from file " + relativePath + "... ", migrationStatus);
 
-                CascadeAssetInformation cascadePage = WebServices.createDataDefinitionBlock(file, projectInformation);
+                CascadeAssetInformation cascadeBlock = WebServices.createDataDefinitionBlock(file, projectInformation);
 
-                Log.add(PathUtil.generatePageLink(cascadePage, projectInformation.getUrl()), migrationStatus);
+                Log.add(PathUtil.generateBlockLink(cascadeBlock, projectInformation.getUrl()), migrationStatus);
 
                 migrationStatus.incrementProgress(1);
-                migrationStatus.addCreatedPage(cascadePage);
+                migrationStatus.addCreatedBlock(cascadeBlock);
 
-                // Add the page to the list because links will need to be realigned.
-                if (cascadePage.isAlreadyExisted())
+                // Add the block to the list because links will need to be realigned.
+                if (cascadeBlock.isAlreadyExisted())
                 {
                     migrationStatus.incrementAssetsSkipped();
                     Log.add("<span class=\"text-warning\">already existed.</span><br/>", migrationStatus);

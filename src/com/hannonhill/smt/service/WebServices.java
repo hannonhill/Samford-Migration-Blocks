@@ -36,7 +36,6 @@ import com.hannonhill.www.ws.ns.AssetOperationService.ListSitesResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.MetadataFieldVisibility;
 import com.hannonhill.www.ws.ns.AssetOperationService.MetadataSet;
 import com.hannonhill.www.ws.ns.AssetOperationService.OperationResult;
-import com.hannonhill.www.ws.ns.AssetOperationService.Page;
 import com.hannonhill.www.ws.ns.AssetOperationService.Path;
 import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.Site;
@@ -189,21 +188,23 @@ public class WebServices
 
     /**
      * Creates a data definition block in Cascade Server based on the information provided in the
-     * projectInformation and the actual file from which the Page needs to be created.
+     * projectInformation and the actual file from which the block needs to be created.
      * 
-     * @param pageFile
+     * @param blockFile
      * @param projectInformation
-     * @return Returns the created page's id.
+     * @return Returns the {@link CascadeAssetInformation} about the created block
      * @throws Exception
      */
-    public static CascadeAssetInformation createDataDefinitionBlock(java.io.File pageFile, ProjectInformation projectInformation) throws Exception
+    public static CascadeAssetInformation createDataDefinitionBlock(java.io.File blockFile, ProjectInformation projectInformation) throws Exception
     {
-        String path = PathUtil.createPagePathFromFileSystemFile(pageFile, projectInformation);
-        if (!XmlAnalyzer.allCharactersLegal(path))
-            path = XmlAnalyzer.removeIllegalCharacters(path);
+        // This should be caught before, but just a sanity check
+        if (projectInformation.getContentTypePath() == null)
+            return null;
 
-        String parentFolderPath = PathUtil.getParentFolderPathFromPath(path);
-        String contentTypePath = projectInformation.getContentTypePath();
+        // Set up the block object and assign it to the asset object
+        XhtmlDataDefinitionBlock block = WebServicesUtil.setupDataDefinitionBlockObject(blockFile, projectInformation);
+        String path = block.getParentFolderPath() + "/" + block.getName();
+        String parentFolderPath = block.getParentFolderPath();
 
         String overwriteBehavior = projectInformation.getOverwriteBehavior();
         if (overwriteBehavior.equals(ProjectInformation.OVERWRITE_BEHAVIOR_SKIP_EXISTING))
@@ -213,16 +214,10 @@ public class WebServices
                 return new CascadeAssetInformation(blockId, path, true);
         }
 
-        // This should be caught before, but just a sanity check
-        if (contentTypePath == null)
-            return null;
-
         // Check for duplicate paths
         if (projectInformation.getMigrationStatus().getCreatedAssetPaths().contains(path.toLowerCase()))
             throw new Exception("Duplicate path found - asset with given path already got created during this migration: " + path.toLowerCase());
 
-        // Set up the page object and assign it to the asset object
-        XhtmlDataDefinitionBlock block = WebServicesUtil.setupDataDefinitionBlockObject(pageFile, projectInformation);
         Asset asset = new Asset();
         asset.setXhtmlDataDefinitionBlock(block);
 
@@ -231,20 +226,22 @@ public class WebServices
         String existingBlockId = null;
         if (overwriteBehavior.equals(ProjectInformation.OVERWRITE_BEHAVIOR_UPDATE_EXISTING))
             existingBlockId = getBlockId(path, projectInformation);
-        // If overwite existing is selected, we need to delete the existing page and ignore an error if it did
+        // If overwite existing is selected, we need to delete the existing block and ignore an error if it
+        // did
         // not exists and we attempted to delete it
         else if (overwriteBehavior.equals(ProjectInformation.OVERWRITE_BEHAVIOR_OVERWRITE_EXISTING))
             deleteDataDefinitionBlock(path, projectInformation);
 
-        // If page doesn't exist or overwrite behavior is not to update existing, create the page and ancestor
+        // If block doesn't exist or overwrite behavior is not to update existing, create the block and
+        // ancestor
         // folders if necessary
         if (existingBlockId == null)
         {
             Authentication authentication = getAuthentication(projectInformation);
             CreateResult createResult = getServer(projectInformation.getUrl()).create(authentication, asset);
 
-            // If the page couldn't be created because parent folder doesn't exist, go ahead and create the
-            // parent folder and attempt to create the page again
+            // If the block couldn't be created because parent folder doesn't exist, go ahead and create the
+            // parent folder and attempt to create the block again
             if (!createResult.getSuccess().equals("true"))
             {
                 String message = createResult.getMessage();
@@ -252,10 +249,10 @@ public class WebServices
                         && message.contains("could not be found"))
                 {
                     createFolder(parentFolderPath, projectInformation);
-                    return createDataDefinitionBlock(pageFile, projectInformation);
+                    return createDataDefinitionBlock(blockFile, projectInformation);
                 }
 
-                throw new Exception("Page " + path + " could not be created: " + createResult.getMessage() + " - Parent folder path is: -"
+                throw new Exception("Block " + path + " could not be created: " + createResult.getMessage() + " - Parent folder path is: -"
                         + parentFolderPath + "-");
             }
 
@@ -333,8 +330,8 @@ public class WebServices
         Authentication authentication = getAuthentication(projectInformation);
         CreateResult createResult = getServer(projectInformation.getUrl()).create(authentication, asset);
 
-        // If the page couldn't be created because parent folder doesn't exist, go ahead and create the
-        // parent folder and attempt to create the page again
+        // If the file couldn't be created because parent folder doesn't exist, go ahead and create the
+        // parent folder and attempt to create the file again
         if (!createResult.getSuccess().equals("true"))
         {
             String message = createResult.getMessage();
@@ -361,25 +358,6 @@ public class WebServices
     }
 
     /**
-     * Reads a page with given id from Cascade Server
-     * 
-     * @param id
-     * @param projectInformation
-     * @return
-     * @throws Exception
-     */
-    public static Page readPage(String id, ProjectInformation projectInformation) throws Exception
-    {
-        Authentication authentication = getAuthentication(projectInformation);
-        Identifier identifier = new Identifier(id, null, EntityTypeString.page, false);
-        ReadResult readResult = getServer(projectInformation.getUrl()).read(authentication, identifier);
-        if (!readResult.getSuccess().equals("true"))
-            throw new Exception("Error occured when reading a Page with id '" + id + "': " + readResult.getMessage());
-
-        return readResult.getAsset().getPage();
-    }
-
-    /**
      * Reads an XHTML Block with given id from Cascade Server
      * 
      * @param id
@@ -387,7 +365,7 @@ public class WebServices
      * @return
      * @throws Exception
      */
-    public static XhtmlDataDefinitionBlock readXhtmlBlock(String id, ProjectInformation projectInformation) throws Exception
+    public static XhtmlDataDefinitionBlock readDataDefinitionBlock(String id, ProjectInformation projectInformation) throws Exception
     {
         Authentication authentication = getAuthentication(projectInformation);
         Identifier identifier = new Identifier(id, null, EntityTypeString.block_XHTML_DATADEFINITION, false);
@@ -437,9 +415,9 @@ public class WebServices
     }
 
     /**
-     * Reads all files, blocks and pages in selected site and stores their paths in projectInformation so that
-     * later it doesn't have to read whole the asset only to see if it exists (as it can be very slow if the
-     * asset is big).
+     * Reads all files and blocks in selected site and stores their paths in projectInformation so that later
+     * it doesn't have to read whole the asset only to see if it exists (as it can be very slow if the asset
+     * is big).
      * 
      * @param projectInformation
      * @throws Exception
@@ -478,8 +456,7 @@ public class WebServices
     /**
      * Recursively reads all assets from given folder and its descendants and stores their paths in
      * {@link ProjectInformation#getExistingCascadeFiles()},
-     * {@link ProjectInformation#getExistingCascadeXhtmlBlocks()} and
-     * {@link ProjectInformation#getExistingCascadePages()}
+     * {@link ProjectInformation#getExistingCascadeXhtmlBlocks()}
      * 
      * @param folderIdentifier
      * @param projectInformation
@@ -510,7 +487,7 @@ public class WebServices
     }
 
     /**
-     * Reads a page with given path and returns its id. If the page doesn't exist, returns null.
+     * Reads a block with given path and returns its id. If the block doesn't exist, returns null.
      * 
      * @param path
      * @param projectInformation
@@ -547,7 +524,7 @@ public class WebServices
         if (!readResult.getSuccess().equals("true")
                 && (readResult.getMessage() == null || !readResult.getMessage().equals(
                         "Unable to identify an entity based on provided entity path '" + cachePath + "' and type 'file'")))
-            throw new Exception("Error occured when reading a Page with path '" + path + "': " + readResult.getMessage());
+            throw new Exception("Error occured when reading a File with path '" + path + "': " + readResult.getMessage());
 
         return readResult.getSuccess().equals("true") ? readResult.getAsset().getFile() : null;
     }
@@ -573,8 +550,8 @@ public class WebServices
         ReadResult readResult = getServer(projectInformation.getUrl()).read(authentication, identifier);
         if (!readResult.getSuccess().equals("true")
                 && (readResult.getMessage() == null || !readResult.getMessage().equals(
-                        "Unable to identify an entity based on provided entity path '" + cachePath + "' and type 'file'")))
-            throw new Exception("Error occured when reading a Page with path '" + path + "': " + readResult.getMessage());
+                        "Unable to identify an entity based on provided entity path '" + cachePath + "' and type 'block'")))
+            throw new Exception("Error occured when reading a Block with path '" + path + "': " + readResult.getMessage());
 
         return readResult.getSuccess().equals("true") ? readResult.getAsset().getXhtmlDataDefinitionBlock() : null;
     }
@@ -598,8 +575,8 @@ public class WebServices
     }
 
     /**
-     * Asks Cascade Server to delete a data definition with given path. If page didn't exist, the error will
-     * be ignored. If some other problem occurred, an exception will be thrown.
+     * Asks Cascade Server to delete a data definition block with given path. If block didn't exist, the error
+     * will be ignored. If some other problem occurred, an exception will be thrown.
      * 
      * @param path
      * @param projectInformation
@@ -641,7 +618,7 @@ public class WebServices
         CreateResult createResult = getServer(projectInformation.getUrl()).create(authentication, asset);
 
         // If the folder couldn't be create because parent folder doesn't exist, go ahead and create the
-        // parent folder and attempt to create the page again
+        // parent folder and attempt to create the folder again
         if (!createResult.getSuccess().equals("true"))
         {
             String message = createResult.getMessage();

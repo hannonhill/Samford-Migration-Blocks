@@ -8,7 +8,6 @@ package com.hannonhill.smt.util;
 import java.io.File;
 
 import com.hannonhill.smt.CascadeAssetInformation;
-import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.www.ws.ns.AssetOperationService.Identifier;
 
 /**
@@ -201,10 +200,10 @@ public class PathUtil
      * necessary
      * 
      * @param url a url in format "localhost:8080" or "http://localhost:8080" or
-     *        "localhost:8080/ws/services/AssetOperationService"
-     *        or "localhost:8080/ws/services/AssetOperationService?wsdl" or
-     *        "http://localhost:8080/ws/services/AssetOperationService"
-     *        or "http://localhost:8080/ws/services/AssetOperationService?wsdl"
+     *        "localhost:8080/ws/services/AssetOperationService" or
+     *        "localhost:8080/ws/services/AssetOperationService?wsdl" or
+     *        "http://localhost:8080/ws/services/AssetOperationService" or
+     *        "http://localhost:8080/ws/services/AssetOperationService?wsdl"
      * @return a url in format "http://localhost:8080/ws/services/AssetOperationService?wsdl" or
      *         "http://localhost:8080/ws/services/AssetOperationService"
      */
@@ -231,18 +230,7 @@ public class PathUtil
         return url.substring(0, url.indexOf("/ws/services/AssetOperationService"));
     }
 
-    /**
-     * Generates a link to the page in Cascade Server
-     * 
-     * @param cascadePage
-     * @param cascadeUrl
-     * @return
-     */
-    public static String generatePageLink(CascadeAssetInformation cascadePage, String cascadeUrl)
-    {
-        return "<a href=\"" + PathUtil.getURLWithoutAssetOperationPart(cascadeUrl) + "/entity/open.act?id=" + cascadePage.getId()
-                + "&amp;type=page\" target=\"_blank\">/" + cascadePage.getPath() + "</a> ";
-    }
+
 
     /**
      * Generates a link to the file in Cascade Server
@@ -299,18 +287,6 @@ public class PathUtil
             link = link.substring(3);
         }
         return counter;
-    }
-
-    /**
-     * Creates a Cascade path using a file system file path
-     * 
-     * @param file
-     * @param projectInformation
-     * @return
-     */
-    public static String createPagePathFromFileSystemFile(File file, ProjectInformation projectInformation)
-    {
-        return PathUtil.truncateExtension(PathUtil.getRelativePath(file, projectInformation.getXmlDirectory()));
     }
 
     /**

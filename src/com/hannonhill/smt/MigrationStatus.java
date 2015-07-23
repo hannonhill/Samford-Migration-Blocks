@@ -22,7 +22,6 @@ public class MigrationStatus extends TaskStatus
     private int assetsSkipped;
     private int assetsWithErrors;
 
-    private final List<CascadeAssetInformation> createdPages; // a list of ids and paths of created pages
     private final List<CascadeAssetInformation> createdBlocks; // a list of ids of created blocks
 
     private final Set<String> createdAssetPaths; // to quickly check for duplicates
@@ -38,7 +37,6 @@ public class MigrationStatus extends TaskStatus
         assetsSkipped = 0;
         assetsWithErrors = 0;
 
-        createdPages = new ArrayList<CascadeAssetInformation>();
         createdBlocks = new ArrayList<CascadeAssetInformation>();
 
         createdAssetPaths = new HashSet<String>();
@@ -90,25 +88,6 @@ public class MigrationStatus extends TaskStatus
     public void incrementAssetsWithErrors()
     {
         assetsWithErrors++;
-    }
-
-    /**
-     * @return Returns the createdPages.
-     */
-    public List<CascadeAssetInformation> getCreatedPages()
-    {
-        return createdPages;
-    }
-
-    /**
-     * Adds the created page to the list and its path to the set
-     * 
-     * @param page
-     */
-    public void addCreatedPage(CascadeAssetInformation page)
-    {
-        createdPages.add(page);
-        createdAssetPaths.add(page.getPath().toLowerCase());
     }
 
     /**

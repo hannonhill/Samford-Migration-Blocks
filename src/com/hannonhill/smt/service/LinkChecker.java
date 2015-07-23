@@ -21,7 +21,6 @@ import com.hannonhill.smt.LinkCheckingStatus;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.util.PathUtil;
 import com.hannonhill.smt.util.XmlUtil;
-import com.hannonhill.www.ws.ns.AssetOperationService.Page;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataType;
 import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
@@ -37,7 +36,7 @@ public class LinkChecker
     private static final String LINK_XPATH = "//a | //img | //script | //link ";
 
     /**
-     * Checks all the links in the pages that were created during migration
+     * Checks all the links in the blocks that were created during migration
      * (projectInformation.getMigrationStatus().getCreatedPages())
      * 
      * @param projectInformation
@@ -55,29 +54,7 @@ public class LinkChecker
 
             try
             {
-                checkLinksForXhtmlBlock(block.getId(), projectInformation);
-                linkCheckingStatus.incrementAssetsChecked();
-            }
-            catch (Exception e)
-            {
-                Log.add("<span class=\"text-error\">Error: " + e.getMessage() + "</span><br/>", linkCheckingStatus);
-                e.printStackTrace();
-                linkCheckingStatus.incrementAssetsWithErrors();
-            }
-
-            linkCheckingStatus.incrementProgress(1);
-        }
-
-        for (CascadeAssetInformation page : projectInformation.getMigrationStatus().getCreatedPages())
-        {
-            if (linkCheckingStatus.isShouldStop())
-                return;
-
-            Log.add("Checking links for page " + PathUtil.generatePageLink(page, projectInformation.getUrl()) + "<br/>", linkCheckingStatus);
-
-            try
-            {
-                checkLinks(page.getId(), projectInformation);
+                checkLinks(block.getId(), projectInformation);
                 linkCheckingStatus.incrementAssetsChecked();
             }
             catch (Exception e)
@@ -94,33 +71,18 @@ public class LinkChecker
     /**
      * Checks the links in a page with given id.
      * 
-     * @param pageId
+     * @param blockId
      * @param projectInformation
      * @throws Exception
      */
-    private static void checkLinks(String pageId, ProjectInformation projectInformation) throws Exception
+    private static void checkLinks(String blockId, ProjectInformation projectInformation) throws Exception
     {
-        Page cascadePage = WebServices.readPage(pageId, projectInformation);
-        String xhtml = cascadePage.getXhtml();
+        XhtmlDataDefinitionBlock cascadeBlock = WebServices.readDataDefinitionBlock(blockId, projectInformation);
+        String xhtml = cascadeBlock.getXhtml();
         if (xhtml != null)
             checkLinksFromXml(projectInformation, xhtml);
         else
-            checkLinks(projectInformation, cascadePage.getStructuredData().getStructuredDataNodes());
-    }
-
-    /**
-     * Checks the links in an XHTML Block with given id.
-     * 
-     * @param pageId
-     * @param projectInformation
-     * @throws Exception
-     */
-    private static void checkLinksForXhtmlBlock(String blockId, ProjectInformation projectInformation) throws Exception
-    {
-        XhtmlDataDefinitionBlock block = WebServices.readXhtmlBlock(blockId, projectInformation);
-        String xhtml = block.getXhtml();
-        if (xhtml != null)
-            checkLinksFromXml(projectInformation, xhtml);
+            checkLinks(projectInformation, cascadeBlock.getStructuredData().getStructuredDataNodes());
     }
 
     /**
@@ -225,8 +187,7 @@ public class LinkChecker
 
     /**
      * Gets the link's path from the XML node. If it is a &ltimg&gt; or &lt;script&gt; tag, it looks into the
-     * "src" attribute.
-     * In other tags, it looks into the "href" attribute.
+     * "src" attribute. In other tags, it looks into the "href" attribute.
      * 
      * @param node
      * @return
