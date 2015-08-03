@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.ContentTypeMapping;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.service.MappingPersister;
 
@@ -24,12 +26,13 @@ public class AssignContentTypeAction extends BaseAction
 
     private final List<String> contentTypes = new ArrayList<String>(); // a list of available Cascade Content
                                                                        // Type paths in given site
-
-    private String selectedContentType; // the Cascade Content Type path selected by the user after the form
-                                        // submission
+    private final List<ContentTypeMapping> mappedContentTypes = new ArrayList<ContentTypeMapping>();
 
     private String dataDefinitionBlockExtensions;
-    private String dataDefinitionBlockXPath;
+    private String[] selectedContentTypes = new String[0]; // the Cascade Content Type path selected by the
+                                                           // user after the form submission
+
+    private String[] dataDefinitionBlockXPaths = new String[0];
 
     @Override
     public String execute() throws Exception
@@ -49,24 +52,50 @@ public class AssignContentTypeAction extends BaseAction
     {
         ProjectInformation projectInformation = getProjectInformation();
 
-        // Clear out the information
-        if (selectedContentType == null || selectedContentType.trim().equals(""))
-        {
-            addActionError("You must select the content type");
-            return processView();
-        }
-
-        projectInformation.setContentTypePath(selectedContentType);
-
         if (dataDefinitionBlockExtensions == null || dataDefinitionBlockExtensions.trim().equals(""))
         {
             addActionError("You must at least one page extension");
             return processView();
         }
-
         projectInformation.getDataDefinitionBlockExtensions().clear();
         projectInformation.setDataDefinitionBlockExtensions(dataDefinitionBlockExtensions);
-        projectInformation.setDataDefinitionBlockXPath(dataDefinitionBlockXPath);
+
+        if (selectedContentTypes.length == 0)
+        {
+            addActionError("You must select at least one content type");
+            return processView();
+        }
+
+        // Trim the mappings that were removed
+        int mappingsSize = projectInformation.getMappedContentTypes().size();
+        for (int i = selectedContentTypes.length; i < mappingsSize; i++)
+            projectInformation.getMappedContentTypes().remove(selectedContentTypes.length);
+
+        // Then add new ones or update existing ones
+        for (int i = 0; i < selectedContentTypes.length; i++)
+        {
+            String selectedContentType = selectedContentTypes[i];
+            if (selectedContentType.equals(""))
+            {
+                addActionError("You must select a content type");
+                return processView();
+            }
+
+            ContentTypeInformation ctInfo = projectInformation.getContentTypes().get(selectedContentType);
+            if (ctInfo != null)
+            {
+                if (i >= projectInformation.getMappedContentTypes().size())
+                    projectInformation.getMappedContentTypes().add(new ContentTypeMapping(ctInfo));
+                else
+                {
+                    ContentTypeMapping ctMapping = projectInformation.getMappedContentTypes().get(i);
+                    ctMapping.setContentTypeInformation(ctInfo);
+                }
+            }
+        }
+
+        for (int i = 0; i < dataDefinitionBlockXPaths.length; i++)
+            projectInformation.getMappedContentTypes().get(i).setDataDefinitionBlockXPath(dataDefinitionBlockXPaths[i]);
 
         try
         {
@@ -89,14 +118,13 @@ public class AssignContentTypeAction extends BaseAction
     private String processView()
     {
         ProjectInformation projectInformation = getProjectInformation();
-        MappingPersister.loadMappings(projectInformation);
-
-        contentTypes.addAll(projectInformation.getContentTypes().keySet());
-        selectedContentType = projectInformation.getContentTypePath();
-        Collections.sort(contentTypes);
 
         dataDefinitionBlockExtensions = projectInformation.getDataDefinitionBlockExtensionsString();
-        dataDefinitionBlockXPath = projectInformation.getDataDefinitionBlockXPath();
+        contentTypes.addAll(projectInformation.getContentTypes().keySet());
+        mappedContentTypes.addAll(projectInformation.getMappedContentTypes());
+
+        Collections.sort(contentTypes);
+
         return INPUT;
     }
 
@@ -109,19 +137,19 @@ public class AssignContentTypeAction extends BaseAction
     }
 
     /**
-     * @return Returns the selectedContentType.
+     * @return Returns the selectedContentTypes.
      */
-    public String getSelectedContentType()
+    public String[] getSelectedContentTypes()
     {
-        return selectedContentType;
+        return selectedContentTypes;
     }
 
     /**
-     * @param selectedContentType the selectedContentType to set
+     * @param selectedContentTypes the selectedContentTypes to set
      */
-    public void setSelectedContentType(String selectedContentType)
+    public void setSelectedContentTypes(String[] selectedContentTypes)
     {
-        this.selectedContentType = selectedContentType;
+        this.selectedContentTypes = selectedContentTypes;
     }
 
     /**
@@ -149,18 +177,26 @@ public class AssignContentTypeAction extends BaseAction
     }
 
     /**
-     * @return Returns the dataDefinitionBlockXPath.
+     * @return Returns the dataDefinitionBlockXPaths.
      */
-    public String getDataDefinitionBlockXPath()
+    public String[] getDataDefinitionBlockXPaths()
     {
-        return dataDefinitionBlockXPath;
+        return dataDefinitionBlockXPaths;
     }
 
     /**
-     * @param dataDefinitionBlockXPath the dataDefinitionBlockXPath to set
+     * @param dataDefinitionBlockXPaths the dataDefinitionBlockXPaths to set
      */
-    public void setDataDefinitionBlockXPath(String dataDefinitionBlockXPath)
+    public void setDataDefinitionBlockXPaths(String[] dataDefinitionBlockXPaths)
     {
-        this.dataDefinitionBlockXPath = dataDefinitionBlockXPath;
+        this.dataDefinitionBlockXPaths = dataDefinitionBlockXPaths;
+    }
+
+    /**
+     * @return Returns the mappedContentTypes.
+     */
+    public List<ContentTypeMapping> getMappedContentTypes()
+    {
+        return mappedContentTypes;
     }
 }

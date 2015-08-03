@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hannonhill.smt.ChooserType;
-import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.ContentTypeMapping;
 import com.hannonhill.smt.DataDefinitionField;
 import com.hannonhill.smt.Field;
 import com.hannonhill.smt.MetadataSetField;
@@ -54,13 +54,23 @@ public class WebServicesUtil
     public static XhtmlDataDefinitionBlock setupDataDefinitionBlockObject(File blockFile, ProjectInformation projectInformation) throws Exception
     {
         String fileContents = JTidy.tidyContentConditionallyFullHtml(FileSystem.getFileContents(blockFile));
-        String blockXPath = projectInformation.getDataDefinitionBlockXPath();
-        if (blockXPath != null && !blockXPath.equals(""))
+        ContentTypeMapping contentTypeMapping = null;
+        for (ContentTypeMapping ctMapping : projectInformation.getMappedContentTypes())
         {
-            String xpathResult = XmlUtil.evaluateXPathExpression(fileContents, projectInformation.getDataDefinitionBlockXPath());
-            if (xpathResult == null || xpathResult.equals(""))
-                return null;
+            String blockXPath = ctMapping.getDataDefinitionBlockXPath();
+            if (blockXPath != null && !blockXPath.equals(""))
+            {
+                String xpathResult = XmlUtil.evaluateXPathExpression(fileContents, ctMapping.getDataDefinitionBlockXPath());
+                if (xpathResult != null && !xpathResult.equals(""))
+                {
+                    contentTypeMapping = ctMapping;
+                    break;
+                }
+            }
         }
+
+        if (contentTypeMapping == null)
+            return null;
 
         String parentFolderPath = XmlUtil.evaluateXPathExpression(fileContents, "/Content/@Path");
         if (parentFolderPath == null)
@@ -79,23 +89,22 @@ public class WebServicesUtil
         if (blockName == null || blockName.equals(""))
             throw new Exception("Could not find name");
 
-        String contentTypePath = projectInformation.getContentTypePath();
-        ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
-        Set<String> metadataFieldNames = contentType.getMetadataFields().keySet();
+        Set<String> metadataFieldNames = contentTypeMapping.getContentTypeInformation().getMetadataFields().keySet();
 
         XhtmlDataDefinitionBlock block = new XhtmlDataDefinitionBlock();
-        block.setMetadataSetId(contentType.getMetadataSetId());
+        block.setMetadataSetId(contentTypeMapping.getContentTypeInformation().getMetadataSetId());
         block.setName(blockName);
         block.setParentFolderPath(parentFolderPath);
         block.setSiteName(projectInformation.getSiteName());
-        block.setMetadata(createMetadata(projectInformation, fileContents, metadataFieldNames, projectInformation.getMigrationStatus()));
+        block.setMetadata(createMetadata(projectInformation, contentTypeMapping, fileContents, metadataFieldNames,
+                projectInformation.getMigrationStatus()));
 
         // Create the structured data object with the tree of structured data nodes
-        StructuredData structuredData = createStructuredData(projectInformation, fileContents, parentFolderPath + "/" + blockName,
-                contentType.getDataDefinitionId());
+        StructuredData structuredData = createStructuredData(projectInformation, contentTypeMapping, fileContents,
+                parentFolderPath + "/" + blockName, contentTypeMapping.getContentTypeInformation().getDataDefinitionId());
 
         // If block uses data definition, assign it to the block object
-        if (contentType.isUsesDataDefinition())
+        if (contentTypeMapping.getContentTypeInformation().isUsesDataDefinition())
             block.setStructuredData(structuredData);
         else
         {
@@ -119,22 +128,23 @@ public class WebServicesUtil
      * Creates the structured data object with the values from the fileContents. U
      * 
      * @param projectInformation
+     * @param contentTypeMapping
      * @param fileContents
      * @param assetPath
      * @param dataDefinitionId
      * @return
      * @throws Exception
      */
-    private static StructuredData createStructuredData(ProjectInformation projectInformation, String fileContents, String assetPath,
-            String dataDefinitionId) throws Exception
+    private static StructuredData createStructuredData(ProjectInformation projectInformation, ContentTypeMapping contentTypeMapping,
+            String fileContents, String assetPath, String dataDefinitionId) throws Exception
     {
         // Create the root group object to which all the information will be attached
         StructuredDataGroup rootGroup = new StructuredDataGroup();
 
         // For each field mapping assign appropriate value in structured data
-        for (String xPath : projectInformation.getFieldMapping().keySet())
+        for (String xPath : contentTypeMapping.getFieldMapping().keySet())
         {
-            Field field = projectInformation.getFieldMapping().get(xPath);
+            Field field = contentTypeMapping.getFieldMapping().get(xPath);
 
             if (field == null || !(field instanceof DataDefinitionField))
                 continue;
@@ -148,11 +158,11 @@ public class WebServicesUtil
         }
 
         // For each static value field, assign the static value in structured data
-        for (Field field : projectInformation.getStaticValueMapping().keySet())
+        for (Field field : contentTypeMapping.getStaticValueMapping().keySet())
             if (field instanceof DataDefinitionField)
             {
                 // Escape ampersands to make it a valid xml
-                String fieldValue = projectInformation.getStaticValueMapping().get(field).replaceAll("&", "&amp;");
+                String fieldValue = contentTypeMapping.getStaticValueMapping().get(field).replaceAll("&", "&amp;");
                 assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
             }
 
@@ -163,14 +173,15 @@ public class WebServicesUtil
      * Creates the metadata object with the values from the fileContents.
      * 
      * @param projectInformation
+     * @param contentTypeMapping
      * @param fileContents
      * @param availableMetadataFieldNames
      * @param taskStatus
      * @return
      * @throws Exception
      */
-    private static Metadata createMetadata(ProjectInformation projectInformation, String fileContents, Set<String> availableMetadataFieldNames,
-            TaskStatus taskStatus) throws Exception
+    private static Metadata createMetadata(ProjectInformation projectInformation, ContentTypeMapping contentTypeMapping, String fileContents,
+            Set<String> availableMetadataFieldNames, TaskStatus taskStatus) throws Exception
     {
         // Create the metadata object and the list of dynamic fields
         Metadata metadata = new Metadata();
@@ -185,9 +196,9 @@ public class WebServicesUtil
                 }));
 
         // For each field mapping assign appropriate value in metadata
-        for (String xPath : projectInformation.getFieldMapping().keySet())
+        for (String xPath : contentTypeMapping.getFieldMapping().keySet())
         {
-            Field field = projectInformation.getFieldMapping().get(xPath);
+            Field field = contentTypeMapping.getFieldMapping().get(xPath);
 
             if (field == null)
                 continue;
@@ -201,12 +212,12 @@ public class WebServicesUtil
         }
 
         // For each static value field, assign the static value in the metadata
-        for (Field field : projectInformation.getStaticValueMapping().keySet())
+        for (Field field : contentTypeMapping.getStaticValueMapping().keySet())
             if (field instanceof MetadataSetField)
             {
                 // Escape ampersands to make it a valid xml
                 String fieldValue = trimMetadataFieldValue(field.getIdentifier(),
-                        projectInformation.getStaticValueMapping().get(field).replaceAll("&", "&amp;"), taskStatus);
+                        contentTypeMapping.getStaticValueMapping().get(field).replaceAll("&", "&amp;"), taskStatus);
                 assignAppropriateFieldValue(metadata, dynamicFieldsList, (MetadataSetField) field, fieldValue);
             }
 

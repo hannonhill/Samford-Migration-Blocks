@@ -5,11 +5,7 @@
  */
 package com.hannonhill.smt.struts;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.ContentTypeMapping;
 import com.hannonhill.smt.Field;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.service.MappingPersister;
@@ -25,12 +21,7 @@ public class AssignFieldsAction extends BaseAction
     private static final long serialVersionUID = -4363153939547280598L;
 
     // These are the available Cascade fields
-    private final List<Field> cascadeMetadataFields = new ArrayList<Field>(); // a list of available Cascade
-                                                                              // Metadata Set field
-                                                                              // identifiers
-    private final List<Field> cascadeDataDefinitionFields = new ArrayList<Field>(); // a list of available
-                                                                                    // Cascade Data
-                                                                                    // Definitnion field paths
+    private ContentTypeMapping contentTypeMapping;
 
     // These are the hidden fields that are generated automatically by javascript. For each assignment, all 4
     // arrays have one element added.
@@ -38,6 +29,7 @@ public class AssignFieldsAction extends BaseAction
     private String[] staticValues = new String[0];
     private String[] selectedCascadeMetadataFields = new String[0];
     private String[] selectedCascadeDataDefinitionFields = new String[0];
+    private String ctIndex = "0";
 
     @Override
     public String execute() throws Exception
@@ -56,19 +48,21 @@ public class AssignFieldsAction extends BaseAction
     private String processSubmit()
     {
         ProjectInformation projectInformation = getProjectInformation();
+        int ctIndex = getCtIndexInt();
+        if (ctIndex >= projectInformation.getMappedContentTypes().size())
+            return SUCCESS;
+
+        ContentTypeMapping contentTypeMapping = projectInformation.getMappedContentTypes().get(ctIndex);
 
         // Clear out the old information
-        projectInformation.getFieldMapping().clear();
-        projectInformation.getStaticValueMapping().clear();
-
-        String contentTypePath = projectInformation.getContentTypePath();
-        ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
+        contentTypeMapping.getFieldMapping().clear();
+        contentTypeMapping.getStaticValueMapping().clear();
 
         // Go through each field assignment submitted by the form
         try
         {
             for (int i = 0; i < selectedXPaths.length; i++)
-                addFieldMapping(i, contentType, projectInformation);
+                addFieldMapping(i, contentTypeMapping);
             MappingPersister.persistMappings(projectInformation);
         }
         catch (Exception e)
@@ -77,7 +71,9 @@ public class AssignFieldsAction extends BaseAction
             return processView();
         }
 
-        return SUCCESS;
+        setCtIndex("" + (getCtIndexInt() + 1));
+
+        return processView();
     }
 
     /**
@@ -88,13 +84,33 @@ public class AssignFieldsAction extends BaseAction
     private String processView()
     {
         ProjectInformation projectInformation = getProjectInformation();
-        String contentTypePath = projectInformation.getContentTypePath();
 
-        ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
-        cascadeMetadataFields.addAll(contentType.getMetadataFields().values());
-        cascadeDataDefinitionFields.addAll(contentType.getDataDefinitionFields().values());
+        int ctIndex = getCtIndexInt();
+
+        if (ctIndex >= projectInformation.getMappedContentTypes().size())
+            return SUCCESS;
+
+        contentTypeMapping = projectInformation.getMappedContentTypes().get(ctIndex);
 
         return INPUT;
+    }
+
+    /**
+     * @return Returns an int value of ctIndex or 0 if can't be parsed or null.
+     */
+    private int getCtIndexInt()
+    {
+        if (ctIndex == null)
+            return 0;
+
+        try
+        {
+            return Integer.parseInt(ctIndex);
+        }
+        catch (Exception e)
+        {
+            return 0;
+        }
     }
 
     /**
@@ -104,11 +120,10 @@ public class AssignFieldsAction extends BaseAction
      * from the contentType. The created mapping is added to the projectInformation's appropriate mapping.
      * 
      * @param i
-     * @param contentType
-     * @param projectInformation
+     * @param contentTypeMapping
      * @throws Exception
      */
-    private void addFieldMapping(int i, ContentTypeInformation contentType, ProjectInformation projectInformation) throws Exception
+    private void addFieldMapping(int i, ContentTypeMapping contentTypeMapping) throws Exception
     {
         String selectedXPath = selectedXPaths[i];
         String staticValue = staticValues[i];
@@ -122,17 +137,17 @@ public class AssignFieldsAction extends BaseAction
         String cascadeFieldIdentifier = isDataDefinition ? cascadeDataDefinitionFieldIdentifier : cascadeMetadataFieldIdentifier;
 
         // Get the actual field from the content type
-        Field field = isDataDefinition ? contentType.getDataDefinitionFields().get(cascadeFieldIdentifier) : contentType.getMetadataFields().get(
-                cascadeFieldIdentifier);
+        Field field = isDataDefinition ? contentTypeMapping.getContentTypeInformation().getDataDefinitionFields().get(cascadeFieldIdentifier)
+                : contentTypeMapping.getContentTypeInformation().getMetadataFields().get(cascadeFieldIdentifier);
 
         if (field == null)
             throw new Exception("Data Definition or Metadata has been updated in meantime. Please re-assign Content Types again.");
 
         // Similar way, by checking which field is "null", we can add the mapping to correct type of map
         if (!isStaticValue)
-            projectInformation.getFieldMapping().put(selectedXPath, field);
+            contentTypeMapping.getFieldMapping().put(selectedXPath, field);
         else
-            projectInformation.getStaticValueMapping().put(field, staticValue);
+            contentTypeMapping.getStaticValueMapping().put(field, staticValue);
     }
 
     /**
@@ -152,19 +167,19 @@ public class AssignFieldsAction extends BaseAction
     }
 
     /**
-     * @return Returns the cascadeMetadataFields.
+     * @return Returns the contentTypeMapping.
      */
-    public List<Field> getCascadeMetadataFields()
+    public ContentTypeMapping getContentTypeMapping()
     {
-        return cascadeMetadataFields;
+        return contentTypeMapping;
     }
 
     /**
-     * @return Returns the cascadeDataDefinitionFields.
+     * @param contentTypeMapping the contentTypeMapping to set
      */
-    public List<Field> getCascadeDataDefinitionFields()
+    public void setContentTypeMapping(ContentTypeMapping contentTypeMapping)
     {
-        return cascadeDataDefinitionFields;
+        this.contentTypeMapping = contentTypeMapping;
     }
 
     /**
@@ -181,22 +196,6 @@ public class AssignFieldsAction extends BaseAction
     public void setSelectedCascadeDataDefinitionFields(String[] selectedCascadeDataDefinitionFields)
     {
         this.selectedCascadeDataDefinitionFields = selectedCascadeDataDefinitionFields;
-    }
-
-    /**
-     * @return Returns the fieldMap.
-     */
-    public Map<String, Field> getFieldMap()
-    {
-        return getProjectInformation().getFieldMapping();
-    }
-
-    /**
-     * @return Returns the staticValueMap
-     */
-    public Map<Field, String> getStaticValueMap()
-    {
-        return getProjectInformation().getStaticValueMapping();
     }
 
     /**
@@ -230,4 +229,21 @@ public class AssignFieldsAction extends BaseAction
     {
         this.selectedXPaths = selectedXPaths;
     }
+
+    /**
+     * @return Returns the ctIndex.
+     */
+    public String getCtIndex()
+    {
+        return ctIndex;
+    }
+
+    /**
+     * @param ctIndex the ctIndex to set
+     */
+    public void setCtIndex(String ctIndex)
+    {
+        this.ctIndex = ctIndex;
+    }
+
 }

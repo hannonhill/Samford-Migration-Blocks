@@ -198,10 +198,6 @@ public class WebServices
      */
     public static CascadeAssetInformation createDataDefinitionBlock(java.io.File blockFile, ProjectInformation projectInformation) throws Exception
     {
-        // This should be caught before, but just a sanity check
-        if (projectInformation.getContentTypePath() == null)
-            return null;
-
         // Set up the block object and assign it to the asset object
         XhtmlDataDefinitionBlock block = WebServicesUtil.setupDataDefinitionBlockObject(blockFile, projectInformation);
         if (block == null)

@@ -6,8 +6,10 @@
 package com.hannonhill.smt;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,21 +34,15 @@ public class ProjectInformation
     private String password;
     private String siteName;
     private String xmlDirectory;
-    private String contentTypePath;
     private String overwriteBehavior; // Matches one of the constants
                                       // ProjectInformation.OVERWRITE_BEHAVIOR_???
     private Map<String, ExternalRootLevelFolderAssignment> externalRootLevelFolderAssignemnts;
-    private final Map<String, Field> fieldMapping = new HashMap<String, Field>(); // a mapping from an XPath
-                                                                                  // to a Cascade field
-    private final Map<Field, String> staticValueMapping = new HashMap<Field, String>(); // this mapping maps
-                                                                                        // from a Cascade
-                                                                                        // field to its static
-                                                                                        // value it should get
 
     // analyzed information
     private Map<String, ContentTypeInformation> contentTypes; // content type path and the actual content type
                                                               // information (with the available metadata and
                                                               // dd fields)
+    private final List<ContentTypeMapping> mappedContentTypes; // Content types to use
     private final Set<File> filesToProcess; // All the files that need to be processed during migration -
                                             // it is a set to avoid duplicates and because order doesn't
                                             // really matter
@@ -61,8 +57,6 @@ public class ProjectInformation
 
     private final Set<String> dataDefinitionBlockExtensions; // Extensions of files that need to be converted
                                                              // to data definition blocks
-
-    private String dataDefinitionBlockXPath = "";
 
     // other useful information
     private MigrationStatus migrationStatus;
@@ -86,6 +80,7 @@ public class ProjectInformation
         currentTask = null;
         filesToProcess = new HashSet<File>();
         contentTypes = new HashMap<String, ContentTypeInformation>();
+        mappedContentTypes = new ArrayList<ContentTypeMapping>();
         externalRootLevelFolderAssignemnts = new HashMap<String, ExternalRootLevelFolderAssignment>();
         existingCascadeFiles = new HashMap<String, String>();
         existingCascadeDataDefinitionBlocks = new HashMap<String, String>();
@@ -342,35 +337,11 @@ public class ProjectInformation
     }
 
     /**
-     * @return Returns the contentTypePath.
+     * @return Returns the mappedContentTypes.
      */
-    public String getContentTypePath()
+    public List<ContentTypeMapping> getMappedContentTypes()
     {
-        return contentTypePath;
-    }
-
-    /**
-     * @param contentTypePath the contentTypePath to set
-     */
-    public void setContentTypePath(String contentTypePath)
-    {
-        this.contentTypePath = contentTypePath;
-    }
-
-    /**
-     * @return Returns the fieldMapping.
-     */
-    public Map<String, Field> getFieldMapping()
-    {
-        return fieldMapping;
-    }
-
-    /**
-     * @return Returns the staticValueMapping.
-     */
-    public Map<Field, String> getStaticValueMapping()
-    {
-        return staticValueMapping;
+        return mappedContentTypes;
     }
 
     /**
@@ -438,21 +409,5 @@ public class ProjectInformation
             result.add(extension.trim());
 
         return result;
-    }
-
-    /**
-     * @return Returns the dataDefinitionBlockXPath.
-     */
-    public String getDataDefinitionBlockXPath()
-    {
-        return dataDefinitionBlockXPath;
-    }
-
-    /**
-     * @param dataDefinitionBlockXPath the dataDefinitionBlockXPath to set
-     */
-    public void setDataDefinitionBlockXPath(String dataDefinitionBlockXPath)
-    {
-        this.dataDefinitionBlockXPath = dataDefinitionBlockXPath;
     }
 }

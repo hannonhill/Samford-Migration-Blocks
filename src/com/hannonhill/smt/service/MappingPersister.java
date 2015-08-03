@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
 import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.ContentTypeMapping;
 import com.hannonhill.smt.DataDefinitionField;
 import com.hannonhill.smt.ExternalRootLevelFolderAssignment;
 import com.hannonhill.smt.Field;
@@ -32,6 +33,8 @@ import com.hannonhill.smt.util.XmlUtil;
 public class MappingPersister
 {
     private static final String PROJECT_INFORMATION_TAG = "projectInformation";
+    private static final String MAPPED_CONTENT_TYPES = "mappedContentTypes";
+    private static final String MAPPED_CONTENT_TYPE = "mappedContentType";
     private static final String MAPPED_CONTENT_TYPE_PATH_TAG = "mappedContentTypePath";
     private static final String FIELD_MAPPINGS_TAG = "fieldMappings";
     private static final String FIELD_MAPPING_TAG = "fieldMapping";
@@ -60,19 +63,29 @@ public class MappingPersister
         StringBuilder content = new StringBuilder();
         content.append("<" + PROJECT_INFORMATION_TAG + ">");
 
-        String contentTypePath = projectInformation.getContentTypePath();
-        if (contentTypePath != null)
-            content.append("<" + MAPPED_CONTENT_TYPE_PATH_TAG + ">" + contentTypePath + "</" + MAPPED_CONTENT_TYPE_PATH_TAG + ">");
+        content.append("<" + MAPPED_CONTENT_TYPES + ">");
+        for (ContentTypeMapping ctMapping : projectInformation.getMappedContentTypes())
+        {
+            content.append("<" + MAPPED_CONTENT_TYPE + ">");
+            content.append("<" + MAPPED_CONTENT_TYPE_PATH_TAG + ">" + ctMapping.getContentTypeInformation().getPath() + "</"
+                    + MAPPED_CONTENT_TYPE_PATH_TAG + ">");
 
-        content.append("<" + FIELD_MAPPINGS_TAG + ">");
-        for (String metadataFieldName : projectInformation.getFieldMapping().keySet())
-            persistFieldMapping(content, projectInformation.getFieldMapping(), metadataFieldName);
-        content.append("</" + FIELD_MAPPINGS_TAG + ">");
+            content.append("<" + FIELD_MAPPINGS_TAG + ">");
+            for (String metadataFieldName : ctMapping.getFieldMapping().keySet())
+                persistFieldMapping(content, ctMapping.getFieldMapping(), metadataFieldName);
+            content.append("</" + FIELD_MAPPINGS_TAG + ">");
 
-        content.append("<" + STATIC_VALUE_MAPPINGS_TAG + ">");
-        for (Field field : projectInformation.getStaticValueMapping().keySet())
-            persistStaticValueMapping(content, projectInformation.getStaticValueMapping(), field);
-        content.append("</" + STATIC_VALUE_MAPPINGS_TAG + ">");
+            content.append("<" + STATIC_VALUE_MAPPINGS_TAG + ">");
+            for (Field field : ctMapping.getStaticValueMapping().keySet())
+                persistStaticValueMapping(content, ctMapping.getStaticValueMapping(), field);
+            content.append("</" + STATIC_VALUE_MAPPINGS_TAG + ">");
+
+            content.append("<" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
+            content.append(StringEscapeUtils.escapeXml(ctMapping.getDataDefinitionBlockXPath()));
+            content.append("</" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
+            content.append("</" + MAPPED_CONTENT_TYPE + ">");
+        }
+        content.append("</" + MAPPED_CONTENT_TYPES + ">");
 
         content.append("<" + ROOT_LEVEL_FOLDERS_TAG + ">");
         for (String folder : projectInformation.getExternalRootLevelFolderAssignemnts().keySet())
@@ -82,10 +95,6 @@ public class MappingPersister
         content.append("<" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
         content.append(projectInformation.getDataDefinitionBlockExtensionsString());
         content.append("</" + DATA_DEFINITION_BLOCK_EXTENSIONS_TAG + ">");
-
-        content.append("<" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
-        content.append(StringEscapeUtils.escapeXml(projectInformation.getDataDefinitionBlockXPath()));
-        content.append("</" + DATA_DEFINITION_BLOCK_XPATH_TAG + ">");
 
         content.append("</" + PROJECT_INFORMATION_TAG + ">");
 
@@ -108,9 +117,7 @@ public class MappingPersister
             File file = new File(xmlFilePath);
 
             // Clear existing values
-            projectInformation.setContentTypePath(null);
-            projectInformation.getFieldMapping().clear();
-            projectInformation.getStaticValueMapping().clear();
+            projectInformation.getMappedContentTypes().clear();
             projectInformation.setDefaultExtensions();
             projectInformation.getExternalRootLevelFolderAssignemnts().clear();
             projectInformation.setMigrationStatus(new MigrationStatus());
@@ -120,32 +127,67 @@ public class MappingPersister
                 return;
 
             Node rootNode = XmlUtil.convertXmlToNodeStructure(new InputSource(new FileInputStream(file)));
-
-            ContentTypeInformation contentType = null;
             for (int i = 0; i < rootNode.getChildNodes().getLength(); i++)
             {
                 Node node = rootNode.getChildNodes().item(i);
-                if (node.getNodeName().equals(MAPPED_CONTENT_TYPE_PATH_TAG))
-                {
-                    projectInformation.setContentTypePath(node.getTextContent());
-                    contentType = projectInformation.getContentTypes().get(projectInformation.getContentTypePath());
-                }
+                if (node.getNodeName().equals(MAPPED_CONTENT_TYPES))
+                    loadContentTypes(projectInformation, node);
                 else if (node.getNodeName().equals(ROOT_LEVEL_FOLDERS_TAG))
                     loadRootLevelFolders(projectInformation, node);
-                else if (node.getNodeName().equals(FIELD_MAPPINGS_TAG))
-                    loadFieldMappings(node, projectInformation.getFieldMapping(), contentType);
-                else if (node.getNodeName().equals(STATIC_VALUE_MAPPINGS_TAG))
-                    loadStaticValueMappings(node, projectInformation.getStaticValueMapping(), contentType);
                 else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_EXTENSIONS_TAG))
                     projectInformation.setDataDefinitionBlockExtensions(node.getTextContent());
-                else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_XPATH_TAG))
-                    projectInformation.setDataDefinitionBlockXPath(node.getTextContent());
             }
         }
         catch (Exception e)
         {
             // If problem occured, don't do anything. Just show the stack trace.
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Loads the content type mappings
+     * 
+     * @param projectInformation
+     * @param contentTypesNode
+     */
+    private static void loadContentTypes(ProjectInformation projectInformation, Node contentTypesNode)
+    {
+        for (int i = 0; i < contentTypesNode.getChildNodes().getLength(); i++)
+        {
+            Node node = contentTypesNode.getChildNodes().item(i);
+            if (node.getNodeName().equals(MAPPED_CONTENT_TYPE))
+                loadContentType(projectInformation, node);
+        }
+    }
+
+    /**
+     * Loads an individual content type mapping
+     * 
+     * @param projectInformation
+     * @param contentTypeNode
+     */
+    private static void loadContentType(ProjectInformation projectInformation, Node contentTypeNode)
+    {
+        ContentTypeMapping ctMapping = null;
+        for (int i = 0; i < contentTypeNode.getChildNodes().getLength(); i++)
+        {
+            Node node = contentTypeNode.getChildNodes().item(i);
+            if (node.getNodeName().equals(MAPPED_CONTENT_TYPE_PATH_TAG))
+            {
+                String contentTypePath = node.getTextContent();
+                ContentTypeInformation ctInfo = projectInformation.getContentTypes().get(contentTypePath);
+                if (ctInfo == null)
+                    return;
+                ctMapping = new ContentTypeMapping(ctInfo);
+                projectInformation.getMappedContentTypes().add(ctMapping);
+            }
+            else if (node.getNodeName().equals(FIELD_MAPPINGS_TAG) && ctMapping != null)
+                loadFieldMappings(node, ctMapping);
+            else if (node.getNodeName().equals(STATIC_VALUE_MAPPINGS_TAG) && ctMapping != null)
+                loadStaticValueMappings(node, ctMapping);
+            else if (node.getNodeName().equals(DATA_DEFINITION_BLOCK_XPATH_TAG) && ctMapping != null)
+                ctMapping.setDataDefinitionBlockXPath(node.getTextContent());
         }
     }
 
@@ -197,16 +239,15 @@ public class MappingPersister
      * object by its identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingsNode
-     * @param mappings
-     * @param contentType
+     * @param contentTypeMapping
      */
-    private static void loadFieldMappings(Node mappingsNode, Map<String, Field> mappings, ContentTypeInformation contentType)
+    private static void loadFieldMappings(Node mappingsNode, ContentTypeMapping contentTypeMapping)
     {
         for (int i = 0; i < mappingsNode.getChildNodes().getLength(); i++)
         {
             Node node = mappingsNode.getChildNodes().item(i);
             if (node.getNodeName().equals(FIELD_MAPPING_TAG))
-                loadFieldMapping(node, mappings, contentType);
+                loadFieldMapping(node, contentTypeMapping);
         }
     }
 
@@ -215,10 +256,9 @@ public class MappingPersister
      * the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
-     * @param mappings
-     * @param contentType
+     * @param contentTypeMapping
      */
-    private static void loadFieldMapping(Node mappingNode, Map<String, Field> mappings, ContentTypeInformation contentType)
+    private static void loadFieldMapping(Node mappingNode, ContentTypeMapping contentTypeMapping)
     {
         String fieldName = null;
         String cascadeMetadataField = null;
@@ -241,11 +281,11 @@ public class MappingPersister
 
         // Quit if the field with given identifier does not exist anymore - it's possible that the metadata
         // set or data definition was modified
-        Field field = getField(contentType, cascadeMetadataField, cascadeDataDefinitionField);
+        Field field = getField(contentTypeMapping.getContentTypeInformation(), cascadeMetadataField, cascadeDataDefinitionField);
         if (field == null)
             return;
 
-        mappings.put(fieldName, field);
+        contentTypeMapping.getFieldMapping().put(fieldName, field);
     }
 
     /**
@@ -254,16 +294,15 @@ public class MappingPersister
      * ignored.
      * 
      * @param mappingsNode
-     * @param mappings
-     * @param contentType
+     * @param contentTypeMapping
      */
-    private static void loadStaticValueMappings(Node mappingsNode, Map<Field, String> mappings, ContentTypeInformation contentType)
+    private static void loadStaticValueMappings(Node mappingsNode, ContentTypeMapping contentTypeMapping)
     {
         for (int i = 0; i < mappingsNode.getChildNodes().getLength(); i++)
         {
             Node node = mappingsNode.getChildNodes().item(i);
             if (node.getNodeName().equals(STATIC_VALUE_MAPPING_TAG))
-                loadStaticValueMapping(node, mappings, contentType);
+                loadStaticValueMapping(node, contentTypeMapping);
         }
     }
 
@@ -272,10 +311,9 @@ public class MappingPersister
      * identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
-     * @param mappings
-     * @param contentType
+     * @param contentTypeMapping
      */
-    private static void loadStaticValueMapping(Node mappingNode, Map<Field, String> mappings, ContentTypeInformation contentType)
+    private static void loadStaticValueMapping(Node mappingNode, ContentTypeMapping contentTypeMapping)
     {
         String cascadeMetadataField = null;
         String cascadeDataDefinitionField = null;
@@ -298,11 +336,11 @@ public class MappingPersister
 
         // Quit if the field with given identifier does not exist anymore - it's possible that the metadata
         // set or data definition was modified
-        Field field = getField(contentType, cascadeMetadataField, cascadeDataDefinitionField);
+        Field field = getField(contentTypeMapping.getContentTypeInformation(), cascadeMetadataField, cascadeDataDefinitionField);
         if (field == null)
             return;
 
-        mappings.put(field, staticValue);
+        contentTypeMapping.getStaticValueMapping().put(field, staticValue);
     }
 
     /**

@@ -20,6 +20,7 @@ import com.hannonhill.www.ws.ns.AssetOperationService.ContentType;
  */
 public class ContentTypeInformation
 {
+    private final String path;
     private final Map<String, MetadataSetField> metadataFields; // mapping from the metadata field identifier
                                                                 // to the actual field
     private final Map<String, DataDefinitionField> dataDefinitionFields; // mapping from the data definition
@@ -39,7 +40,8 @@ public class ContentTypeInformation
      */
     public ContentTypeInformation(ContentType contentType, ProjectInformation projectInformation) throws Exception
     {
-        metadataFields = WebServices.getMetadataFieldsForContentType(projectInformation, contentType);
+        this.path = contentType.getPath();
+        this.metadataFields = WebServices.getMetadataFieldsForContentType(projectInformation, contentType);
         Map<String, DataDefinitionField> dataDefinitionFields = WebServices.getDataDefinitionFieldsForContentType(projectInformation, contentType);
         if (dataDefinitionFields != null)
         {
@@ -55,6 +57,15 @@ public class ContentTypeInformation
         }
         this.dataDefinitionId = contentType.getDataDefinitionId();
         this.metadataSetId = contentType.getMetadataSetId();
+
+    }
+
+    /**
+     * @return Returns the path.
+     */
+    public String getPath()
+    {
+        return path;
     }
 
     /**
@@ -96,4 +107,5 @@ public class ContentTypeInformation
     {
         return metadataSetId;
     }
+
 }
