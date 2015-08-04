@@ -98,7 +98,7 @@ public class AssignFieldsAction extends BaseAction
     /**
      * @return Returns an int value of ctIndex or 0 if can't be parsed or null.
      */
-    private int getCtIndexInt()
+    public int getCtIndexInt()
     {
         if (ctIndex == null)
             return 0;

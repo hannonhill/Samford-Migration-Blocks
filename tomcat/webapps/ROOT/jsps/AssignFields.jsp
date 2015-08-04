@@ -83,7 +83,12 @@
                 </table>
               </div>
             </div>
-            <button class="btn pull-left" onclick="window.location='/AssignContentType';return false;">Previous</button>
+            <s:if test="ctIndexInt == 0">
+              <a href="/AssignContentType" class="btn pull-left">Previous</a>
+            </s:if>
+            <s:if test="ctIndexInt > 0">
+              <a href="/AssignFields?ctIndex=<s:property value="ctIndexInt-1"/>" class="btn pull-left">Previous</a>
+            </s:if>
             <button type="submit" name="submitButton" class="btn btn-primary pull-right">Save and Next</button>
           </form>
         </div>

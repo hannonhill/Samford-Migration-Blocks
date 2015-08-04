@@ -109,7 +109,7 @@
 					  </div>
 					  <div class="clearfix">&nbsp;</div>
 					  <br/>
-					  <button class="btn pull-left" onclick="window.location='/AssignFields?assetType=<s:property value="nAssetTypes-1"/>';return false;">Previous</button>
+					  <a class="btn pull-left" href="/AssignFields?ctIndex=<s:property value="nMappedContentTypes-1"/>">Previous</a>
 					 	<button type="submit" name="submitButton" class="btn btn-primary pull-right">Save and Next</button>
 					</form>
 				</div>

@@ -90,4 +90,12 @@ public class MigrationSummaryAction extends BaseAction
     {
         this.overwriteBehavior = overwriteBehavior;
     }
+
+    /**
+     * @return Returns number of mapped content types
+     */
+    public int getNMappedContentTypes()
+    {
+        return getProjectInformation().getMappedContentTypes().size();
+    }
 }
