@@ -147,10 +147,6 @@ public class Migrator
                 // To build the file path that needs to be displayed, we show only the part of the abosute
                 // path after the xml directory
                 String relativePath = PathUtil.getRelativePath(file, projectInformation.getXmlDirectory());
-
-                if (!XmlAnalyzer.allCharactersLegal(relativePath))
-                    relativePath = XmlAnalyzer.removeIllegalCharacters(relativePath);
-
                 Log.add("Creating a block from file " + relativePath + "... ", migrationStatus);
 
                 CascadeAssetInformation cascadeBlock = WebServices.createDataDefinitionBlock(file, projectInformation);

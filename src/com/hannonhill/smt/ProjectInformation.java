@@ -27,6 +27,7 @@ public class ProjectInformation
     public static final String OVERWRITE_BEHAVIOR_OVERWRITE_EXISTING = "Overwrite existing (deletes and re-creates them)";
     public static final String OVERWRITE_BEHAVIOR_UPDATE_EXISTING = "Update existing (edits existing assets)";
     public static final String OVERWRITE_BEHAVIOR_SKIP_EXISTING = "Skip existing (does nothing if asset already exists, always on for files)";
+    public static final String METADATA_ID_FIELD_IDENTIFIER = "id";
 
     // user entered information
     private String url;

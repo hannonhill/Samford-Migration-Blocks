@@ -259,4 +259,32 @@ public class XmlAnalyzer
     {
         return Character.isUnicodeIdentifierPart(c) || Character.isWhitespace(c) || c == '.' || c == ',' || c == '-' || c == '+' || c == '/';
     }
+
+    /**
+     * Removes illegal characters from provided name
+     * 
+     * @param name
+     * @return
+     */
+    public static final String removeIllegalCharactersInName(String name)
+    {
+        StringBuilder result = new StringBuilder();
+        for (char c : name.toCharArray())
+        {
+            if (isLegalCharacterInName(c))
+                result.append(c);
+        }
+        return result.toString();
+    }
+
+    /**
+     * Returns true if given character can be used in system name
+     * 
+     * @param c
+     * @return
+     */
+    private static final boolean isLegalCharacterInName(char c)
+    {
+        return Character.isUnicodeIdentifierPart(c) || Character.isWhitespace(c) || c == '.' || c == ',' || c == '-' || c == '+';
+    }
 }

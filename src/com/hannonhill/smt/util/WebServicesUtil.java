@@ -42,6 +42,9 @@ import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
  */
 public class WebServicesUtil
 {
+    private static final String NAME_XPATH = "/Content/Title/text()";
+    private static final String ID_XPATH = "/Content/@ContentId";
+
     /**
      * Creates a Data Definition Block object based on the information provided in the projectInformation and
      * the actual file from which the Data Definition Block needs to be created.
@@ -85,9 +88,10 @@ public class WebServicesUtil
         if (parentFolderPath.equals(""))
             parentFolderPath = "/";
 
-        String blockName = XmlUtil.evaluateXPathExpression(fileContents, "/Content/@ContentId");
+        String blockName = XmlUtil.evaluateXPathExpression(fileContents, NAME_XPATH);
         if (blockName == null || blockName.equals(""))
-            throw new Exception("Could not find name");
+            throw new Exception("Could not find name using XPath " + NAME_XPATH);
+        blockName = XmlAnalyzer.removeIllegalCharactersInName(blockName);
 
         Set<String> metadataFieldNames = contentTypeMapping.getContentTypeInformation().getMetadataFields().keySet();
 
@@ -194,6 +198,12 @@ public class WebServicesUtil
                 {
                     new FieldValue("")
                 }));
+
+        // Assign id
+        String id = XmlUtil.evaluateXPathExpression(fileContents, ID_XPATH);
+        MetadataSetField idField = contentTypeMapping.getContentTypeInformation().getMetadataFields()
+                .get(ProjectInformation.METADATA_ID_FIELD_IDENTIFIER);
+        assignAppropriateFieldValue(metadata, dynamicFieldsList, idField, id);
 
         // For each field mapping assign appropriate value in metadata
         for (String xPath : contentTypeMapping.getFieldMapping().keySet())

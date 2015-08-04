@@ -201,7 +201,7 @@ public class ProjectPropertiesAction extends BaseAction
     private boolean containsIdField(ContentTypeInformation ctInfo)
     {
         for (MetadataSetField field : ctInfo.getMetadataFields().values())
-            if (field.getIdentifier().equals("id"))
+            if (field.getIdentifier().equals(ProjectInformation.METADATA_ID_FIELD_IDENTIFIER))
                 return true;
 
         return false;

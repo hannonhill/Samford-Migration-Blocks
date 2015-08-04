@@ -79,7 +79,14 @@
                       <th>&nbsp;</th>
                     </tr>
                   </thead>
-                  <tbody id="mappings"></tbody>
+                  <tbody id="mappings">
+                    <tr>
+                      <td>XPath: /Content/@ContentId</th>
+                      <td>id</td>
+                      <td>metadata</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </div>
