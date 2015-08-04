@@ -591,7 +591,7 @@ public class WebServices
 
         if (!deleteResult.getSuccess().equals("true")
                 && (deleteResult.getMessage() == null || !deleteResult.getMessage().equals(
-                        "Unable to identify an entity based on provided entity path '" + path + "' and type 'block_XHTML_DATADEFINITION'")))
+                        "Unable to identify an entity based on provided entity path '" + path + "' and type 'block'")))
             throw new Exception("Error occured when deleting a Block with path '" + path + "': " + deleteResult.getMessage());
     }
 
