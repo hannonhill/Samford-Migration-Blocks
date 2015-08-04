@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.MetadataSetField;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.service.WebServices;
 import com.hannonhill.smt.util.PathUtil;
@@ -181,12 +182,29 @@ public class ProjectPropertiesAction extends BaseAction
         for (ContentType contentType : contentTypes)
             try
             {
-                projectInformation.getContentTypes().put(contentType.getPath(), new ContentTypeInformation(contentType, projectInformation));
+                ContentTypeInformation ctInfo = new ContentTypeInformation(contentType, projectInformation);
+                if (containsIdField(ctInfo))
+                    projectInformation.getContentTypes().put(contentType.getPath(), ctInfo);
             }
             catch (Exception e)
             {
                 addActionError(e.getMessage());
             }
+    }
+
+    /**
+     * Returns true if given Content Type contains an metadata field with identifier "id".
+     * 
+     * @param ctInfo
+     * @return
+     */
+    private boolean containsIdField(ContentTypeInformation ctInfo)
+    {
+        for (MetadataSetField field : ctInfo.getMetadataFields().values())
+            if (field.getIdentifier().equals("id"))
+                return true;
+
+        return false;
     }
 
     /**
@@ -231,13 +249,9 @@ public class ProjectPropertiesAction extends BaseAction
     }
 
     /**
-     * Verifies that:
-     * - the URL is a valid URL
-     * - it is possible to connect
-     * - the username and password authenticate
-     * - the user can read site objects
-     * - the site with given site name exists
-     * - the site can be actually read
+     * Verifies that: - the URL is a valid URL - it is possible to connect - the username and password
+     * authenticate - the user can read site objects - the site with given site name exists - the site can be
+     * actually read
      */
     private void verifyConnectivity()
     {
