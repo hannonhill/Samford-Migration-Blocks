@@ -6,13 +6,17 @@
 package com.hannonhill.smt.util;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.Comment;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.Text;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
@@ -93,7 +97,8 @@ public class XmlUtil
     }
 
     /**
-     * Evaluates given xPathExpression on given xmlContents
+     * Evaluates given xPathExpression on given xmlContents as String. If the expression returns more than one
+     * element, the results are concatenated.
      * 
      * @param xmlContents
      * @param xPathExpression
@@ -109,74 +114,62 @@ public class XmlUtil
         InputSource inputSource = new InputSource(new ByteArrayInputStream(xmlContents.getBytes("UTF-8")));
         Document doc = builder.build(inputSource);
 
-        List<?> result = XPath.selectNodes(doc, xPathExpression);
+        List<?> nodes = XPath.selectNodes(doc, xPathExpression);
 
-        if (result.size() == 0)
-            return "";
+        StringBuilder result = new StringBuilder();
+        for (Object node : nodes)
+            result.append(convertJDOMOjbectToString(node));
 
-        // If the result contains Strings output them
-        if (result.get(0) instanceof String)
-            return outputStrings(result);
-
-        // If the result contains Attributes output their values
-        if (result.get(0) instanceof Attribute)
-            return outputAttributes(result);
-
-        // If the xpath expression expects a text (ends with "/text()"), output the Text objects using
-        // getText() method since XMLOutputter fails to unescape XML entities
-        if (xPathExpression.endsWith("/text()"))
-            return outputTexts(result);
-
-        // Otherwise, let the XMLOutputter handle outputting (it can't handle Attributes or Strings)
-        return new XMLOutputter().outputString(result);
+        return result.toString();
     }
 
     /**
-     * Converts a list of {@link Text} objects to String
+     * Evaluates given xPathExpression on given xmlContents as a list of Strings.
      * 
-     * @param texts
+     * @param xmlContents
+     * @param xPathExpression
      * @return
+     * @throws Exception
      */
-    private static String outputTexts(List<?> texts)
+    public static List<String> evaluateXPathExpressionAsList(String xmlContents, String xPathExpression) throws Exception
     {
-        StringBuilder builder = new StringBuilder();
-        for (Object text : texts)
-            // Verify that this is an attribute first, if it is not, ignore it
-            if (text instanceof Text)
-                builder.append(((Text) text).getText());
+        // JTidy adds a namespace, which causes many issues with xpath
+        xmlContents = xmlContents.replaceAll("xmlns=\"http://www.w3.org/1999/xhtml\"", "");
 
-        return builder.toString();
+        SAXBuilder builder = new SAXBuilder();
+        InputSource inputSource = new InputSource(new ByteArrayInputStream(xmlContents.getBytes("UTF-8")));
+        Document doc = builder.build(inputSource);
+
+        List<?> nodes = XPath.selectNodes(doc, xPathExpression);
+        List<String> result = new ArrayList<String>();
+        for (Object node : nodes)
+            result.add(convertJDOMOjbectToString(node));
+
+        return result;
     }
 
     /**
-     * Converts a list of Strings to a single String
+     * Converts given jDom object to a String.
      * 
-     * @param strings
+     * @param obj
      * @return
      */
-    private static String outputStrings(List<?> strings)
+    private static String convertJDOMOjbectToString(Object obj)
     {
-        StringBuilder builder = new StringBuilder();
-        for (Object string : strings)
-            builder.append(string);
+        if (obj instanceof String)
+            return (String) obj;
+        else if (obj instanceof Attribute)
+            return ((Attribute) obj).getValue();
+        else if (obj instanceof Text)
+            return ((Text) obj).getText();
+        else if (obj instanceof CDATA)
+            return ((CDATA) obj).getText();
+        else if (obj instanceof Comment)
+            return ((Comment) obj).getText();
+        else if (obj instanceof Element)
+            return new XMLOutputter().outputString((Element) obj);
+        else
+            return obj.toString();
 
-        return builder.toString();
-    }
-
-    /**
-     * Converts a list of Attributes to a String containing attribute values
-     * 
-     * @param attributes
-     * @return
-     */
-    private static String outputAttributes(List<?> attributes)
-    {
-        StringBuilder builder = new StringBuilder();
-        for (Object attribute : attributes)
-            // Verify that this is an attribute first, if it is not, ignore it
-            if (attribute instanceof Attribute)
-                builder.append(((Attribute) attribute).getValue());
-
-        return builder.toString();
     }
 }

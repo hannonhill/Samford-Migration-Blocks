@@ -154,11 +154,28 @@ public class WebServicesUtil
                 continue;
 
             DataDefinitionField ddField = (DataDefinitionField) field;
-            String fieldValue = XmlUtil.evaluateXPathExpression(fileContents, xPath);
-            if (ddField.isWysiwyg())
-                fieldValue = LinkRewriter.rewriteLinksInXml(fieldValue, assetPath, projectInformation);
+            // Handle multiple field
+            if (ddField.isMultiple())
+            {
+                List<String> fieldValues = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPath);
+                for (String fieldValue : fieldValues)
+                {
+                    if (ddField.isWysiwyg())
+                        fieldValue = LinkRewriter.rewriteLinksInXml(fieldValue, assetPath, projectInformation);
 
-            assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
+                    assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
+                }
+
+            }
+            // Handle single field
+            else
+            {
+                String fieldValue = XmlUtil.evaluateXPathExpression(fileContents, xPath);
+                if (ddField.isWysiwyg())
+                    fieldValue = LinkRewriter.rewriteLinksInXml(fieldValue, assetPath, projectInformation);
+
+                assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
+            }
         }
 
         // For each static value field, assign the static value in structured data
@@ -339,9 +356,7 @@ public class WebServicesUtil
             textNode.setIdentifier(identifier);
             textNode.setText(fieldValue);
             textNode.setType(StructuredDataType.text);
-            List<StructuredDataNode> textNodes = new ArrayList<StructuredDataNode>();
-            textNodes.add(textNode);
-            currentNode.getContentFields().put(identifier, textNodes);
+            addStructuredDataNode(currentNode.getContentFields(), textNode);
         }
         else if (field.getChooserType() == ChooserType.FILE)
         {
@@ -361,12 +376,29 @@ public class WebServicesUtil
                     fileNode.setFilePath(path);
                     fileNode.setType(StructuredDataType.asset);
                     fileNode.setAssetType(StructuredDataAssetType.fromString("file"));
-                    List<StructuredDataNode> fileNodes = new ArrayList<StructuredDataNode>();
-                    fileNodes.add(fileNode);
-                    currentNode.getContentFields().put(identifier, fileNodes);
+                    addStructuredDataNode(currentNode.getContentFields(), fileNode);
                 }
             }
         }
+    }
+
+    /**
+     * Adds given node to a list of existing nodes if the list already exists in the <code>nodes</code> map
+     * based on the node's identifier. If it does not exist, creates a new list there and adds the node to it.
+     * 
+     * @param nodes
+     * @param node
+     */
+    private static void addStructuredDataNode(Map<String, List<StructuredDataNode>> nodes, StructuredDataNode node)
+    {
+        String identifier = node.getIdentifier();
+        List<StructuredDataNode> nodeList = nodes.get(identifier);
+        if (nodeList == null)
+        {
+            nodeList = new ArrayList<StructuredDataNode>();
+            nodes.put(identifier, nodeList);
+        }
+        nodeList.add(node);
     }
 
     /**
