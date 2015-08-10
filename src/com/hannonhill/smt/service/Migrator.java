@@ -154,6 +154,7 @@ public class Migrator
 
                 if (cascadeBlock == null)
                 {
+                    migrationStatus.incrementAssetsSkipped();
                     Log.add("<span class=\"text-warning\">skipped due to XPath.</span><br/>", migrationStatus);
                     continue;
                 }
