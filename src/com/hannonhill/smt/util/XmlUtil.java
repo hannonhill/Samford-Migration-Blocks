@@ -118,7 +118,7 @@ public class XmlUtil
 
         StringBuilder result = new StringBuilder();
         for (Object node : nodes)
-            result.append(convertJDOMOjbectToString(node));
+            result.append(convertJDOMOjbectToString(node, true));
 
         return result.toString();
     }
@@ -143,7 +143,7 @@ public class XmlUtil
         List<?> nodes = XPath.selectNodes(doc, xPathExpression);
         List<String> result = new ArrayList<String>();
         for (Object node : nodes)
-            result.add(convertJDOMOjbectToString(node));
+            result.add(convertJDOMOjbectToString(node, true));
 
         return result;
     }
@@ -152,9 +152,11 @@ public class XmlUtil
      * Converts given jDom object to a String.
      * 
      * @param obj
+     * @param skipElement If true and the object is an {@link Element}, the result will contain only the
+     *        children and the Element itself will be skipped.
      * @return
      */
-    private static String convertJDOMOjbectToString(Object obj)
+    private static String convertJDOMOjbectToString(Object obj, boolean skipElement)
     {
         if (obj instanceof String)
             return (String) obj;
@@ -166,7 +168,15 @@ public class XmlUtil
             return ((CDATA) obj).getText();
         else if (obj instanceof Comment)
             return ((Comment) obj).getText();
-        else if (obj instanceof Element)
+        else if (obj instanceof Element && skipElement)
+        {
+            StringBuilder result = new StringBuilder();
+            for (Object node : ((Element) obj).getContent())
+                result.append(convertJDOMOjbectToString(node, false));
+
+            return result.toString();
+        }
+        else if (obj instanceof Element && !skipElement)
             return new XMLOutputter().outputString((Element) obj);
         else
             return obj.toString();
