@@ -8,8 +8,10 @@ package com.hannonhill.smt.service;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.hannonhill.smt.CascadeAssetInformation;
 import com.hannonhill.smt.DataDefinitionField;
@@ -56,7 +58,8 @@ public class WebServices
             new MetadataSetField("displayName", "Display Name", false), new MetadataSetField("title", "Title", false),
             new MetadataSetField("summary", "Summary", false), new MetadataSetField("teaser", "Teaser", false),
             new MetadataSetField("keywords", "Keywords", false), new MetadataSetField("metaDescription", "Description", false),
-            new MetadataSetField("author", "Author", false)
+            new MetadataSetField("author", "Author", false), new MetadataSetField("startDate", "Start Date", false),
+            new MetadataSetField("endDate", "End Date", false), new MetadataSetField("reviewDate", "Review Date", false)
     };
 
     // Names of metadata fields whose values can be longer than 250 characters
@@ -66,6 +69,8 @@ public class WebServices
 
     // Identifiers of the standard metadata fields
     public static final List<String> STANDARD_METADATA_FIELD_IDENTIFIERS;
+
+    public static final Set<String> CALENDAR_METADATA_FIELD_IDENTIFIERS;
 
     static
     {
@@ -79,6 +84,11 @@ public class WebServices
         LONG_METADATA_FIELDS.add("summary");
         LONG_METADATA_FIELDS.add("teaser");
         LONG_METADATA_FIELDS.add("metaDescription");
+
+        CALENDAR_METADATA_FIELD_IDENTIFIERS = new HashSet<String>();
+        CALENDAR_METADATA_FIELD_IDENTIFIERS.add("startDate");
+        CALENDAR_METADATA_FIELD_IDENTIFIERS.add("endDate");
+        CALENDAR_METADATA_FIELD_IDENTIFIERS.add("reviewDate");
     }
 
     /**

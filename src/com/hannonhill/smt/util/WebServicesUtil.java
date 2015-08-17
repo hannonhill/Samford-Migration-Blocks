@@ -6,11 +6,17 @@
 package com.hannonhill.smt.util;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import com.hannonhill.smt.ChooserType;
 import com.hannonhill.smt.ContentTypeMapping;
@@ -220,7 +226,7 @@ public class WebServicesUtil
         String id = XmlUtil.evaluateXPathExpression(fileContents, ID_XPATH);
         MetadataSetField idField = contentTypeMapping.getContentTypeInformation().getMetadataFields()
                 .get(ProjectInformation.METADATA_ID_FIELD_IDENTIFIER);
-        assignAppropriateFieldValue(metadata, dynamicFieldsList, idField, id);
+        assignAppropriateFieldValue(metadata, dynamicFieldsList, idField, id, taskStatus);
 
         // For each field mapping assign appropriate value in metadata
         for (String xPath : contentTypeMapping.getFieldMapping().keySet())
@@ -234,7 +240,7 @@ public class WebServicesUtil
             {
                 String fieldValue = XmlUtil.evaluateXPathExpression(fileContents, xPath);
                 fieldValue = trimMetadataFieldValue(field.getIdentifier(), fieldValue, taskStatus);
-                assignAppropriateFieldValue(metadata, dynamicFieldsList, (MetadataSetField) field, fieldValue);
+                assignAppropriateFieldValue(metadata, dynamicFieldsList, (MetadataSetField) field, fieldValue, taskStatus);
             }
         }
 
@@ -245,7 +251,7 @@ public class WebServicesUtil
                 // Escape ampersands to make it a valid xml
                 String fieldValue = trimMetadataFieldValue(field.getIdentifier(),
                         contentTypeMapping.getStaticValueMapping().get(field).replaceAll("&", "&amp;"), taskStatus);
-                assignAppropriateFieldValue(metadata, dynamicFieldsList, (MetadataSetField) field, fieldValue);
+                assignAppropriateFieldValue(metadata, dynamicFieldsList, (MetadataSetField) field, fieldValue, taskStatus);
             }
 
         // Convert the list of dynamic field to an array and assign it to the metadata object
@@ -285,15 +291,35 @@ public class WebServicesUtil
      * @param dynamicFields
      * @param field
      * @param fieldValue
+     * @param taskStatus
      * @throws Exception
      */
     private static void assignAppropriateFieldValue(Metadata metadata, List<DynamicMetadataField> dynamicFields, MetadataSetField field,
-            String fieldValue) throws Exception
+            String fieldValue, TaskStatus taskStatus) throws Exception
     {
         String fieldName = field.getIdentifier();
 
         // If it is a standard metadata field, call the appropriate setter
-        if (!field.isDynamic())
+        if (!field.isDynamic() && WebServices.CALENDAR_METADATA_FIELD_IDENTIFIERS.contains(fieldName))
+        {
+            TimeZone utc = TimeZone.getTimeZone("CST"); // Dates are parsed based on the central standard time
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
+            sdf.setTimeZone(utc);
+            try
+            {
+                Date date = sdf.parse(fieldValue);
+                Calendar calendarValue = new GregorianCalendar(utc);
+                calendarValue.setTime(date);
+                Metadata.class.getMethod("set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1), Calendar.class).invoke(metadata,
+                        calendarValue);
+            }
+            catch (ParseException e)
+            {
+                Log.add("<span style=\"color:orange;\">Cascade metadata field \"" + fieldName + "\" contains value " + fieldValue
+                        + " that cannot be parsed into a calendar format. The proper format is YYYY-MM-DD. Skipping this field.</span>", taskStatus);
+            }
+        }
+        else if (!field.isDynamic() && !WebServices.CALENDAR_METADATA_FIELD_IDENTIFIERS.contains(fieldName))
             Metadata.class.getMethod("set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1), String.class).invoke(metadata,
                     fieldValue);
         // If it is not a standard metadata field, add a dynamic field
